@@ -1,0 +1,569 @@
+openapi: 3.0.0
+info:
+  version: 1.0.0
+  title: Intermediation EU
+  termsOfService: 'https://github.com/DIGGSweden/SDG/terms/'
+  contact:
+    email: sdg-dev@digg.se
+    url: 'https://github.com/DIGGSweden/SDG/contact/'
+  license:
+    name: Apache 2.0
+    url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
+  x-logo:
+    url: 'https://redocly.github.io/openapi-template/logo.png'
+  description: |
+    This is the API for previewing evidences to be consumed in a Swedish procedure. 
+    It covers both the retrieval of the preview link to a preview space as well as the actual 
+    retrieval of the evidence.
+    # Authorization
+    For accessing any of the endpoints the requester needs to provide an authorization header with required token.
+    
+    An example for how to use bearerAuth:
+    ``` 
+    Authorization: Bearer <jwt-token>
+    ```
+tags:
+  - name: Evidence Request
+    description: Evidence of proof
+servers:
+  - url: 'http://example.com/api/v1'
+  - url: 'https://example.com/api/v1'
+paths:
+  '/common/requirements':
+    get:
+      tags:
+        - 'Common services: Evidence Broker'
+      summary: requirements-by-procedure-and-jurisdiction
+      externalDocs:
+        url: https://ec.europa.eu/digital-building-blocks/wikis/display/TDD/3.2.4+Query+Interface+Specification+of+the+EB+-+Q1+2023#id-3.2.4QueryInterfaceSpecificationoftheEBQ12023-4.2.GetListofRequirementsQuery
+      operationId: getRequirements
+      parameters:
+        - name: procedureId
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/ProcedureId'
+        - name: countryCode
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/Country'
+        - name: jurisdictionAdminL2
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/JurisdictionAdminL2'
+        - name: jurisdictionAdminL3
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/JurisdictionAdminL3'
+      security:
+        - main_auth:
+            - 'read:users'
+        - bearerAuth: [ ]
+      responses:
+        '200':
+          description: 'Requirement'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Requirements'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          description: Forbidden
+        '404':
+          description: Requirements not found
+  '/common/evidence-types':
+    get:
+      tags:
+        - 'Common services: Evidence Broker'
+      summary: evidence-types-by-requirement-and-jurisdiction
+      externalDocs:
+        url: https://ec.europa.eu/digital-building-blocks/wikis/display/TDD/3.2.4+Query+Interface+Specification+of+the+EB+-+Q1+2023#id-3.2.4QueryInterfaceSpecificationoftheEBQ12023-4.3.GetEvidenceTypesforRequirementQuery
+      operationId: getEvidenceTypes
+      parameters:
+        - name: requirementId
+          in: query
+          required: true
+          schema:
+            $ref: '#/components/schemas/RequirementId'
+        - name: countryCode
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/Country'
+        - name: jurisdictionAdminL2
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/JurisdictionAdminL2'
+        - name: jurisdictionAdminL3
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/JurisdictionAdminL3'
+      security:
+        - main_auth:
+            - 'read:users'
+        - bearerAuth: [ ]
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EvidenceTypes'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          description: Forbidden
+        '404':
+          description: Evidence not found
+  '/common/data-services':
+    get:
+      tags:
+        - 'Common services: Data Service Directory'
+      summary: dataservices-by-evidencetype-and-jurisdiction
+      externalDocs:
+        url: https://ec.europa.eu/digital-building-blocks/wikis/display/TDD/3.1.4+Query+Interface+Specification+of+the+DSD+-+Q1+2023#id-3.1.4QueryInterfaceSpecificationoftheDSDQ12023-4.2.Query:FindDataServicesofEvidenceProvidersforaspecificEvidenceTypeClassification
+      operationId: getDataService
+      parameters:
+        - name: evidenceTypeClassification
+          in: query
+          required: true
+          schema:
+            $ref: '#/components/schemas/EvidenceTypeClassification'
+        - name: countryCode
+          in: query
+          required: true
+          schema:
+            $ref: '#/components/schemas/Country'
+        - name: jurisdictionAdminL2
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/JurisdictionAdminL2'
+        - name: jurisdictionAdminL3
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/JurisdictionAdminL3'
+        - name: jurisdictionContextId
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: evidenceTypeId
+          in: query
+          required: false
+          schema:
+            type: string
+      security:
+        - main_auth:
+            - 'read:users'
+        - bearerAuth: [ ]
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataServiceEvidenceType'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          description: Forbidden
+        '404':
+          description: Evidence not found
+  '/evidence-request/preview-link':
+    post:
+      tags:
+        - Evidence Request
+      summary: Get preview url for an evidence
+      description: |
+        Returns the preview url for an evidence
+      operationId: getPreviewUrl
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ evidenceTypeClassification, distributedAs, countryCode, person ]
+              properties:
+                evidenceTypeClassification:
+                  $ref: '#/components/schemas/EvidenceTypeClassification'
+                distributedAs:
+                  $ref: '#/components/schemas/DistributionFormat'
+                countryCode:
+                  $ref: '#/components/schemas/Country'
+                procedureId:
+                  $ref: '#/components/schemas/ProcedureId'
+                requirementId:
+                  $ref: '#/components/schemas/RequirementId'
+                evidenceRequesterAgentId:
+                  type: string
+                evidenceProviderAgentId:
+                  type: string
+                person:
+                  $ref: '#/components/schemas/Person'
+      security:
+        - main_auth:
+            - 'read:users'
+        - api_key: [ ]
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PreviewUrl'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          description: Forbidden
+        '404':
+          description: Evidence not found
+  '/evidence-request/files':
+    get:
+      tags:
+        - Evidence Request
+      summary: Get the selected evidence files from the preview space
+      description: |
+        Returns the evidence from the preview space
+      operationId: getEvidence
+      parameters:
+        - name: conversationId
+          in: query
+          required: true
+          schema:
+            $ref: '#/components/schemas/ConversationId'
+      security:
+        - main_auth:
+            - 'read:users'
+        - api_key: [ ]
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EvidenceResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          description: Forbidden
+        '404':
+          description: Evidence not found
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    AccessService:
+      type: object
+      required: [ id, publisherId ]
+      properties:
+        id:
+          $ref: '#/components/schemas/Identifier'
+        publisherId:
+          $ref: '#/components/schemas/Identifier'
+    Address:
+      type: object
+      required: [ adminUnitLevel1 ]
+      properties:
+        fullAddress:
+          type: string
+        locatorDesignator:
+          type: string
+        postCode:
+          type: string
+        postCityName:
+          type: string
+        thoroughfare:
+          type: string
+        adminUnitLevel1:
+          type: string
+        adminUnitLevel2:
+          type: string
+    ConversationId:
+      type: string
+      format: uri
+    Country:
+      type: string
+      enum: [ AT, BE, BG, CY, CZ, DE, DK, EE, EL, ES, FI, FR, HR, HU, IE, IT, LT, LU, LV, MT, NL, PL, PT, RO, SE, SI, SK ]
+    DataServiceEvidenceType:
+      description: '?'
+      type: object
+      required: [ identifier, evidenceTypeClassification, title, distributedAs, accessServices ]
+      properties:
+        identifier:
+          $ref: '#/components/schemas/Identifier'
+        evidenceTypeClassification:
+          $ref: '#/components/schemas/EvidenceTypeClassification'
+        title:
+          $ref: '#/components/schemas/MultiLingualString'
+        distributedAs:
+          type: array
+          items:
+            $ref: '#/components/schemas/EvidenceTypeDistributionType'
+        accessServices:
+          type: array
+          items:
+            $ref: '#/components/schemas/AccessService'
+    DistributionFormat:
+      type: string
+      format: mime-type
+    Evidence:
+      description: Evidence proving something
+      type: object
+      properties:
+        identifier:
+          $ref: '#/components/schemas/Identifier'
+        name:
+          description: Name of evidence
+          type: string
+        description:
+          description: Description of the evidence
+          type: string
+        language:
+          description: Language used in evidence
+        fileList:
+          description: List of files for an evidence
+          type: array
+          items:
+            $ref: '#/components/schemas/FileUrl'
+    EvidenceFile:
+      type: object
+      properties:
+        mimetype:
+          type: string
+        content:
+          type: string
+        filename:
+          type: string
+        structuredData:
+          type: boolean
+        structuredDataSchema:
+          description: 'Schema that describes the structured data'
+          type: string
+          example: 'https://sr.oots.tech.europa.eu/evidencetypeclassifications/EU/b6a49e54-8b3c-4688-acad-380440dc5962'
+        sdgIdentifier:
+          description: ''
+          type: string
+        sdgIssuingAuthorityId:
+          description: ''
+          type: string
+        sdgIssuingAuthorityName:
+          description: ''
+          type: string
+        sdgIsConformantTo:
+          type: object
+          properties:
+            sdgEvidenceTypeClassification:
+              description: ''
+              type: string
+            sdgTitle:
+              description: ''
+              type: object
+              additionalProperties:
+                type: string
+              example:
+                EN: Extract of the Commercial Register (Type A)
+                DE: Amtlicher chronologischer Ausdruck aus dem Handelsregister A
+        sdgDescription:
+          description: ''
+          type: object
+          additionalProperties:
+            type: string
+          example:
+            EN: Extract of the trade register department A for sole traders and corporations. (for example OHG, KG, GmbH, AG)
+            DE: Auszug aus dem Handelsregister Abteilung A für Einzelkaufleute und Personengesellschaften (z.B. OHG, KG, GmbH, AG)
+        sdgIssuingDate:
+          description: ''
+          type: string
+        sdgDistributionFormat:
+          description: ''
+          type: string
+        sdgDistributionLanguage:
+          description: ''
+          type: string
+        sdgDistributionConformsTo:
+          description: ''
+          type: string
+        sdgDistributionTransformation:
+          description: ''
+          type: string
+        sdgValidityPeriodStartDate:
+          description: ''
+          type: string
+        sdgValidityPeriodEndDate:
+          description: ''
+          type: string
+    EvidenceResponse:
+      description: 'The EvidenceResponse object includes an array of human readable files in PDF format. It also contains the structured data file along with its schema.'
+      type: object
+      properties:
+        evidenceFiles:
+          description: 'Structured data in XML or json format'
+          type: array
+          items:
+            $ref: '#/components/schemas/EvidenceFile'
+    EvidenceType:
+      description: '?'
+      type: object
+      properties:
+        evidenceTypeClassification:
+          $ref: '#/components/schemas/EvidenceTypeClassification'
+        title: # Unable to set description
+          $ref: '#/components/schemas/MultiLingualString'
+        description:
+          $ref: '#/components/schemas/MultiLingualString'
+        jurisdictions:
+          type: array
+          items:
+            $ref: '#/components/schemas/JurisdictionType'
+    EvidenceTypes:
+      type: object
+      properties:
+        evidenceTypes:
+          type: array
+          items:
+            $ref: '#/components/schemas/EvidenceType'
+    EvidenceTypeClassification:
+      type: string
+      format: uri
+    EvidenceTypeDistributionType:
+      description: '?'
+      type: object
+      required: [ format ]
+      properties:
+        format:
+          $ref: '#/components/schemas/DistributionFormat'
+        transformation:
+          type: string
+    FileUrl:
+      description: Url to a file part of an evidence
+      type: object
+      properties:
+        url:
+          description: Url to a file
+          type: string
+        name:
+          description: Name of the url
+          type: string
+    Gender:
+      type: string
+      enum:
+        - MALE
+        - FEMALE
+        - UNSPECIFIED
+    Identifier:
+      type: object
+      required: [ value ]
+      properties:
+        schemeId:
+          type: string
+        value:
+          type: string
+    JurisdictionAdminL2:
+      type: string
+      minLength: 3
+      maxLength: 5
+      description: The level two administration code for a specific jurisdiction context expressed using 3 to 5 letter NUTS code.
+      example: AT
+      externalDocs:
+        url: https://code.europa.eu/oots/tdd/tdd_chapters/-/blob/master/OOTS-EDM/codelists/External/NutsCodes.gc
+    JurisdictionAdminL3:
+      type: string
+      description: The level three administration code for a specific jurisdiction context expressed using LAU Code.
+      example: 21001
+      externalDocs:
+        url: https://code.europa.eu/oots/tdd/tdd_chapters/-/blob/master/OOTS-EDM/codelists/OOTS/LAU2022-CodeList.gc
+    JurisdictionType:
+      description: '?'
+      properties:
+        AdminUnitLevel1:
+          $ref: '#/components/schemas/Country'
+        AdminUnitLevel2:
+          $ref: '#/components/schemas/JurisdictionAdminL2'
+        AdminUnitLevel3:
+          $ref: '#/components/schemas/JurisdictionAdminL3'
+    MultiLingualString:
+      description: 'EvidenceType title'
+      type: object
+      additionalProperties:
+        type: string
+    Person:
+      type: object
+      required: [ familyName, givenName, dateOfBirth ]
+      properties:
+        levelOfAssurance:
+          type: string
+        identifier:
+          type: string
+        familyName:
+          type: string
+        givenName:
+          type: string
+        dateOfBirth:
+          type: string
+          format: date
+        birthName:
+          type: string
+        placeOfBirth:
+          type: string
+        currentAddress:
+          $ref: '#/components/schemas/Address'
+        gender:
+          $ref: '#/components/schemas/Gender'
+    PreviewUrl:
+      description: Url to a preview space allowing user to preview an evidence
+      type: object
+      properties:
+        url:
+          description: Url to preview space
+          type: string
+        name:
+          description: Name of the url
+          type: string
+        conversationId:
+          $ref: '#/components/schemas/ConversationId'
+    ProcedureId:
+      type: string
+      example: 'R1'
+      externalDocs:
+        url: https://code.europa.eu/oots/tdd/tdd_chapters/-/blob/master/OOTS-EDM/codelists/OOTS/Procedures-CodeList.gc
+    Requirement:
+      description: '?'
+      type: object
+      required: [ id, name, country ]
+      properties:
+        id:
+          $ref: '#/components/schemas/RequirementId'
+        name:
+          $ref: '#/components/schemas/MultiLingualString'
+        countries:
+          type: array
+          items:
+            $ref: '#/components/schemas/Country'
+    RequirementId:
+      description: Describing the needs of the procedure with regard to the evidence request or a particular piece of information
+      type: string
+      format: uri
+    Requirements:
+      type: object
+      properties:
+        requirements:
+          type: array
+          items:
+            $ref: '#/components/schemas/Requirement'
+
+  responses:
+    UnauthorizedError:
+      description: Access token is missing or invalid
