@@ -1,12 +1,13 @@
 ![Logo](/images/digg.png)
 
 # SDG Bevishämtning, inom det tekniska systemet för bevisutbyte
+Här finns beskrivningen av API:et för intermediationEU vilket är Diggs intermediära plattform för att erbjuda svenska behöriga myndigheter möjligheten att hämta bevis via det tekniska systemet för bevisutbyte (OOTS).
 
 ## Översiktligt flöde
 * Bevishämtning, svenskt onlinfeförarande hämtar bevis från annat medlemsland
 ```mermaid
 flowchart LR
-    subgraph MS
+    subgraph Medlemsland
         OMS(OOTS-nod MS)
         FG(Förhandsgranskning MS)
     end
@@ -22,27 +23,26 @@ flowchart LR
             OLF-->FG
     
 ```
+*Diagram 1: Flödesdiagram för bevishämtning*
 
 
 
-### Auktorisationsflöde vid bevishämtning
-#### Beskrivning
 
-När en användare i ett svenskt onlineförfarande vill hämta ett digitalt bevis från ett annat medlemsland.
-Ett svenskt onlineförfarand begär ett åtkomstintyg för att kunna anropa den svenska bevisförmedlingstjänsten för att hämta ett bevis via OOTS.
+### Flödesbeskrivning översiktligt flöde
 
-#### Flödesbeskrivning
-
-* Använderaren vill hämta ett bevis från annat medlemsland
+* Använderaren i ett onlineförfarande vill hämta ett bevis från annat medlemsland
 * E-tjänsten skickar en signerad begäran om åtkomst till SDG Auktorisationstjänst
 * Auktorisationstjänsten validerar begäran och kontrollerar att e-tjänsten tillhör en behörig myndighet
 * Auktorisationstjänsten ställer ut ett åtkomstintyg till e-tjänsten
-* E-tjänsten anropar Bevisförmedlingstjänsten och bifogar åtkomstintyget
-* Bevisförmedlingstjänsten validerar att åtkomstintyget är signerat av betrodd auktorisationstjänst
-* Bevisförmedlingstjänsten gör en bevisbegäran via OOTS SE
+* E-tjänsten anropar Bevishämtningstjänsten och bifogar åtkomstintyget
+* Bevishämtningstjänsten validerar att åtkomstintyget är signerat av betrodd auktorisationstjänst
+* Bevishämtningstjänsten gör en bevisbegäran via OOTS-SE
+* Andvändaren omdirigeras till bevislämnande lands förhandsgranskningstjänst
+* Användaren väljer att dela beviset i förhandsgranskningstjänsten varpå beviset levereras över OOTS till bevishämtningstjänsten
+* Onlineförfarandet hämtar beviset och låter användaren nyttja det i e-tjänsten
 
 
-#### Detaljerat flöde
+## Detaljerat flöde
 
 ```mermaid
 sequenceDiagram
@@ -70,20 +70,20 @@ Opt Token expired
 OF->>AT: Access Token Request(refresh token)
 AT-->OF: Access Token Grant (accesstoken)
 end
-OF->>BT: /preview-link (accesstoken)
+OF->>+BT: /preview-link (accesstoken)
 BT->>BT: Validate Access Token
 BT->>OTSE: Bevisbegäran
 OTSE->>OTMS: Bevisbegäran
 OTMS->>OTSE: Svar på bevisbegäran
 OTSE->>BT: Svar på bevisbegäran
-BT-->>OF: Svar på bevisbegäran
+BT-->>-OF: Svar på bevisbegäran
 BT->>OTSE: Bevisbegäran 2
 OTSE->>OTMS: Bevisbegäran 2
 OF->>W: Omdirigering till Förhandsgranskning MS
 W-->>MSOF: omdirigering
 MSOF->>MSOF: Återautentisering
-MSOF->>MSBP: Hämta bevis
-MSBP-->>MSOF: Bevissvar
+MSOF->>+MSBP: Hämta bevis
+MSBP-->>-MSOF: Bevissvar
 MSOF->>MSOF: Godkänn bevisdelning
 MSOF-->>W: omdirigering
 W->>OF: Visa bevis
@@ -91,9 +91,10 @@ MSOF->>OTMS: Svar på bevisbegäran
 OTMS->>OTSE: Svar på bevisbegäran
 OTSE->>BT: Svar på bevisbegäran
 loop Polla efter svar
-OF->>BT: Hämta bevis /files
-BT-->>OF: Bevissvar
+OF->>+BT: Hämta bevis /files
+BT-->>-OF: Bevissvar
 end
 ```
-*Diagram 1: Sekvensdiagram för bevishämtning*
+*Diagram 2: Sekvensdiagram för bevishämtning*
 
+### Flödesbeskrivning detaljerat flöde
