@@ -74,8 +74,8 @@ OF->>+BT: /preview-link (accesstoken)
 BT->>BT: Validate Access Token
 BT->>OTSE: Bevisbegäran
 OTSE->>OTMS: Bevisbegäran
-OTMS-->MSOF: Bevisbegäran
-MSOF-->MSOF: Skapa länk till förhandsgranskning
+OTMS->>MSOF: Bevisbegäran
+MSOF->>MSOF: Skapa länk till förhandsgranskning
 MSOF->>OTMS: Bevissvar med förhandsgranskningslänk
 OTMS->>OTSE: Svar på bevisbegäran
 OTSE->>BT: Svar på bevisbegäran
@@ -83,12 +83,12 @@ BT-->>-OF: Svar på bevisbegäran
 BT->>OTSE: Bevisbegäran 2
 OTSE->>OTMS: Bevisbegäran 2
 OF->>W: Omdirigering till Förhandsgranskning MS
-W-->>MSOF: omdirigering
+W->>MSOF: omdirigering
 MSOF->>MSOF: Återautentisering
 MSOF->>+MSBP: Hämta bevis
 MSBP-->>-MSOF: Bevissvar
 MSOF->>MSOF: Godkänn bevisdelning
-MSOF-->>W: omdirigering
+MSOF->>W: omdirigering
 W->>OF: Visa bevis
 MSOF->>OTMS: Svar på bevisbegäran
 OTMS->>OTSE: Svar på bevisbegäran
@@ -111,4 +111,24 @@ end
 8. Bevishämtningstjänsten validerar bifogat accesstoken
 9. Bevishämtningstjänsten skapar en bevisbegäran som skickas via OOTS
 10. Bevisbegäran transporteras via den svenska OOTS-noden till den OOTS-nod som finns i det bevisproducerande landet.
-11. 
+11. Förhandsgranskningstjänsten i bevisproducerande landet tar emot bevisbegäran från OOTS
+12. Förhandsgranskningstjänsten skapar en unik och tidsbegränsad länk.
+13. Bevissvar innehållandes länken till förhandsgranskning skickas tillbaka över OOTS.
+14. Transport av bevissvar mellan OOTS-noder.
+15. Bevissvaret levereras till Bevishämtningstjänsten
+16. Bevissvaret innehållandes länk till förhandsgranskning samt conversationId returneras till e-tjänsten
+17. Besvishämtningstjänsten skickar det bevisbegäran nr 2 vilken nu även innhåller förhandsgranskningslänken.
+18. Bevisbegäran nr 2 skickas över OOTS.
+19. E-tjänsten låter browsern veta adressen till förhandsgranskningstjänsten.
+20. Browsern omdirigerar användaren till förhandsgranskningstjänsten i det bevisproducerande landet.
+21. Förhandsgranskningstjänsten begär en återautentisering.
+22. Förhandsgranskningstjänsten anropar bevisproducenten för att hämta bevis.
+23. Bevisproducenten returnerar begärt bevis.
+24. Användaren förhandsgranskar beviset och väljer att dela det.
+25. Förhandsgranskningstjänsten omdirigerar användaren tillbaka till e-tjänsten.
+26. Användaren begär att få använda beviset i t-tjänsten.
+27. Det förhandsgranskningstjänsten i det bevisproducerande landet skickar de bevis användaren har valt att dela över OOTS.
+28. Bevissvar transporteras över OOTS-noder.
+29. Bevissvaret levereras till bevishämtningstjänsten
+30. E-tjänsten har fått en indikation om att bevis finns att hämta och använder conversationId för att anropa bevistjänsten en eller flera gånger tills svar erhålls.
+31. Bevissvar innehållandes bevis samt metadata returneras till e-tjänsten för vidare behandling. 
