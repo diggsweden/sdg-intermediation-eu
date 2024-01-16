@@ -19,6 +19,7 @@ flowchart LR
             OLF(Onlineförfarande)-->AT
             OLF-->BH
             BH-->OSE
+            BH-->AT
             OSE-->OMS
             OLF-->FG
     
@@ -31,7 +32,7 @@ flowchart LR
 ### Flödesbeskrivning översiktligt flöde
 
 * Använderaren i ett onlineförfarande vill hämta ett bevis från annat medlemsland
-* E-tjänsten skickar en signerad begäran om åtkomst till SDG Auktorisationstjänst
+* E-tjänsten skickar en signerad begäran om åtkomstintyg till SDG Auktorisationstjänst
 * Auktorisationstjänsten validerar begäran och kontrollerar att e-tjänsten tillhör en behörig myndighet
 * Auktorisationstjänsten ställer ut ett åtkomstintyg till e-tjänsten
 * E-tjänsten anropar Bevishämtningstjänsten och bifogar åtkomstintyget
@@ -71,7 +72,7 @@ OF->>AT: Access Token Request(refresh token)
 AT-->OF: Access Token Grant (accesstoken)
 end
 OF->>+BT: /preview-link (accesstoken)
-BT->>BT: Validate Access Token
+BT->>AT: Validate Access Token
 BT->>OTSE: Bevisbegäran
 OTSE->>OTMS: Bevisbegäran
 OTMS->>MSOF: Bevisbegäran
@@ -103,12 +104,12 @@ end
 ### Flödesbeskrivning detaljerat flöde
 1. Användaren initierar en bevishämtning via e-tjänst.
 2. Användaren authentiserar sig via eIDAS
-3. E-tjänsten begär accesstoken från auktorisationstjänsten
+3. E-tjänsten begär accesstoken från auktorisationstjänsten POST: /oauth2/token
 4. Auktorisationstjänsten svarar med en Access Token Grant
 5. Om giltighetstiden för accesstoken skulle ha löpt ut kan en ny hämtas mha refreshtoken
 6. Access Token Grant levererar tillbaka ett nytt accesstoken
 7. E-tjänsten inkluderar accesstoken till anropet POST: /evidence-request/preview-link med parametrar för att precisera efterfrågat bevis
-8. Bevishämtningstjänsten validerar bifogat accesstoken
+8. Bevishämtningstjänsten validerar bifogat accesstoken POST: /oauth2/authorize
 9. Bevishämtningstjänsten skapar en bevisbegäran som skickas via OOTS
 10. Bevisbegäran transporteras via den svenska OOTS-noden till den OOTS-nod som finns i det bevisproducerande landet.
 11. Förhandsgranskningstjänsten i bevisproducerande landet tar emot bevisbegäran från OOTS
@@ -120,15 +121,15 @@ end
 17. Besvishämtningstjänsten skickar det bevisbegäran nr 2 vilken nu även innhåller förhandsgranskningslänken.
 18. Bevisbegäran nr 2 skickas över OOTS.
 19. E-tjänsten låter browsern veta adressen till förhandsgranskningstjänsten.
-20. Browsern omdirigerar användaren till förhandsgranskningstjänsten i det bevisproducerande landet.
-21. Förhandsgranskningstjänsten begär en återautentisering.
-22. Förhandsgranskningstjänsten anropar bevisproducenten för att hämta bevis.
-23. Bevisproducenten returnerar begärt bevis.
-24. Användaren förhandsgranskar beviset och väljer att dela det.
-25. Förhandsgranskningstjänsten omdirigerar användaren tillbaka till e-tjänsten.
-26. Användaren begär att få använda beviset i t-tjänsten.
-27. Det förhandsgranskningstjänsten i det bevisproducerande landet skickar de bevis användaren har valt att dela över OOTS.
-28. Bevissvar transporteras över OOTS-noder.
-29. Bevissvaret levereras till bevishämtningstjänsten
-30. E-tjänsten har fått en indikation om att bevis finns att hämta och använder conversationId för att anropa bevistjänsten en eller flera gånger tills svar erhålls.
-31. Bevissvar innehållandes bevis samt metadata returneras till e-tjänsten för vidare behandling. 
+20. Browsern omdirigerar användaren till förhandsgranskningstjänsten i det bevisproducerande landet. Parametrarna returnurl, returnmethod läggs till i anropet.
+22. Förhandsgranskningstjänsten begär en återautentisering.
+23. Förhandsgranskningstjänsten anropar bevisproducenten för att hämta bevis.
+24. Bevisproducenten returnerar begärt bevis.
+25. Användaren förhandsgranskar beviset och väljer att dela det.
+26. Förhandsgranskningstjänsten omdirigerar användaren tillbaka till e-tjänsten.
+27. Användaren begär att få använda beviset i t-tjänsten.
+28. Det förhandsgranskningstjänsten i det bevisproducerande landet skickar de bevis användaren har valt att dela över OOTS.
+29. Bevissvar transporteras över OOTS-noder.
+30. Bevissvaret levereras till bevishämtningstjänsten
+31. E-tjänsten har fått en indikation om att bevis finns att hämta och använder conversationId för att anropa bevistjänsten en eller flera gånger tills svar erhålls.
+32. Bevissvar innehållandes bevis samt metadata returneras till e-tjänsten för vidare behandling. 
