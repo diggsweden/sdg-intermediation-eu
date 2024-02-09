@@ -25,6 +25,7 @@ flowchart LR
             OLF(Onlineförfarande)-->AT
             OLF-->BH
             BH-->OSE
+            BH-->AT
             OSE-->OMS
             OLF-->FG
     
@@ -38,7 +39,7 @@ flowchart LR
 
 * Använderaren i ett onlineförfarande vill hämta ett bevis från annat medlemsland
 * Användaren väljer bevistyp
-* E-tjänsten skickar en signerad begäran om åtkomst till SDG Auktorisationstjänst
+* E-tjänsten skickar en signerad begäran om åtkomstintyg till SDG Auktorisationstjänst
 * Auktorisationstjänsten validerar begäran och kontrollerar att e-tjänsten tillhör en behörig myndighet
 * Auktorisationstjänsten ställer ut ett åtkomstintyg till e-tjänsten
 * E-tjänsten anropar Bevishämtningstjänsten och bifogar åtkomstintyget
@@ -108,7 +109,7 @@ OF->>AT: Access Token Request(refresh token)
 AT-->OF: Access Token Grant (accesstoken)
 end
 OF->>+BT: /preview-link (accesstoken)
-BT->>BT: Validate Access Token
+BT->>AT: Validate Access Token
 BT->>OTSE: Bevisbegäran
 OTSE->>OTMS: Bevisbegäran
 OTMS->>MSOF: Bevisbegäran
@@ -140,12 +141,12 @@ end
 ### Flödesbeskrivning detaljerat flöde
 1. Användaren initierar en bevishämtning via e-tjänst.
 2. Användaren authentiserar sig via eIDAS
-3. E-tjänsten begär accesstoken från auktorisationstjänsten
+3. E-tjänsten begär accesstoken från auktorisationstjänsten POST: /oauth2/token
 4. Auktorisationstjänsten svarar med en Access Token Grant
 5. Om giltighetstiden för accesstoken skulle ha löpt ut kan en ny hämtas mha refreshtoken
 6. Access Token Grant levererar tillbaka ett nytt accesstoken
 7. E-tjänsten inkluderar accesstoken till anropet POST: /evidence/preview-sessions med parametrar för att precisera efterfrågat bevis
-8. Bevishämtningstjänsten validerar bifogat accesstoken
+8. Bevishämtningstjänsten validerar bifogat accesstoken POST: /oauth2/authorize
 9. Bevishämtningstjänsten skapar en bevisbegäran som skickas via OOTS
 10. Bevisbegäran transporteras via den svenska OOTS-noden till den OOTS-nod som finns i det bevisproducerande landet.
 11. Förhandsgranskningstjänsten i bevisproducerande landet tar emot bevisbegäran från OOTS
