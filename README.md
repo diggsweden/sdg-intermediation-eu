@@ -3,7 +3,7 @@
 # SDG Uppslag och Bevishämtning, inom det tekniska systemet för bevisutbyte
 Här finns beskrivningen av API:et för intermediationEU vilket är Diggs intermediära plattform för att erbjuda svenska behöriga myndigheter möjligheten att hämta bevis via det tekniska systemet för bevisutbyte (OOTS).
 
-[Open-api-specen finns här](https://diggsweden.github.io/sdg-intermediation-se/)
+[Open-api-specen finns här](https://diggsweden.github.io/sdg-intermediation-eu/)
 
 ## Översiktligt flöde
 * Bevishämtning, svenskt onlinfeförarande hämtar bevis från annat medlemsland
