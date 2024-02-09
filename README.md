@@ -3,6 +3,8 @@
 # SDG Uppslag och Bevishämtning, inom det tekniska systemet för bevisutbyte
 Här finns beskrivningen av API:et för intermediationEU vilket är Diggs intermediära plattform för att erbjuda svenska behöriga myndigheter möjligheten att hämta bevis via det tekniska systemet för bevisutbyte (OOTS).
 
+[Open-api-specen finns här](https://diggsweden.github.io/sdg-intermediation-se/)
+
 ## Översiktligt flöde
 * Bevishämtning, svenskt onlinfeförarande hämtar bevis från annat medlemsland
 ```mermaid
@@ -108,7 +110,7 @@ Opt Token expired
 OF->>AT: Access Token Request(refresh token)
 AT-->OF: Access Token Grant (accesstoken)
 end
-OF->>+BT: /preview-link (accesstoken)
+OF->>+BT: POST /preview-sessions (accesstoken)
 BT->>AT: Validate Access Token
 BT->>OTSE: Bevisbegäran
 OTSE->>OTMS: Bevisbegäran
