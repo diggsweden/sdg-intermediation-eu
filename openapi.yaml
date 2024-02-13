@@ -18,8 +18,10 @@ info:
     ```
 
 tags:
-  - name: 'Common Services - Evidence Broker'
-  - name: 'Common Services - Data Service Directory'
+  - name: 'Common Services EB V1'
+    description: 'Common Services Evidence Broker'
+  - name: 'Common Services DSD V1'
+    description: 'Common Services Data Service Directory'
   - name: 'Preview Sessions V1'
     description: 'Requests for Evidence involving review'
   - name: 'Evidences V1'
@@ -32,9 +34,9 @@ servers:
     description: 'DEV environment'
 
 paths:
-  '/common-services/requirements':
+  '/v1/common-services/eb/requirements':
     get:
-      tags: [ 'Common Services - Evidence Broker' ]
+      tags: [ 'Common Services EB V1' ]
       summary: requirements-by-procedure-and-jurisdiction
       externalDocs:
         url: https://ec.europa.eu/digital-building-blocks/sites/pages/viewpage.action?pageId=706382120#id-3.1.4QueryInterfaceSpecificationoftheDSD(December2023)-4.2.Query:FindDataServicesofEvidenceProvidersforaspecificEvidenceTypeClassification
@@ -61,9 +63,9 @@ paths:
           description: Forbidden
         '404':
           description: Requirements not found
-  '/common-services/evidence-types':
+  '/v1/common-services/eb/evidence-types':
     get:
-      tags: [ 'Common Services - Evidence Broker' ]
+      tags: [ 'Common Services EB V1' ]
       summary: evidence-types-by-requirement-and-jurisdiction
       externalDocs:
         url: https://ec.europa.eu/digital-building-blocks/sites/pages/viewpage.action?pageId=706382141#id-3.2.4QueryInterfaceSpecificationoftheEB(December2023)-4.3.GetEvidenceTypesforRequirementQuery
@@ -90,13 +92,33 @@ paths:
           description: Forbidden
         '404':
           description: Evidence not found
-  '/common-services/data-services':
+  '/v1/common-services/eb/procedures':
     get:
-      tags: [ 'Common Services - Data Service Directory' ]
+      tags: [ 'Common Services EB V1' ]
+      summary: 'Extracts procedures referenced by requirements returned by requirements-by-procedure-and-jurisdiction'
+      operationId: getProcedures
+      parameters:
+        - $ref: '#/components/parameters/countryParamMandatory'
+      responses:
+        '200':
+          description: 'Procedures'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Procedures'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          description: Forbidden
+        '404':
+          description: Procedures not found
+  '/v1/common-services/dsd/data-services':
+    get:
+      tags: [ 'Common Services DSD V1' ]
       summary: dataservices-by-evidencetype-and-jurisdiction
       externalDocs:
         url: https://ec.europa.eu/digital-building-blocks/sites/pages/viewpage.action?pageId=706382120#id-3.1.4QueryInterfaceSpecificationoftheDSD(December2023)-4.2.Query:FindDataServicesofEvidenceProvidersforaspecificEvidenceTypeClassification
-      operationId: getDataService
+      operationId: getDataServices
       parameters:
         - name: evidenceTypeClassification
           in: query
@@ -129,26 +151,6 @@ paths:
           description: Forbidden
         '404':
           description: Evidence not found
-  '/common-services/procedures':
-    get:
-      tags: [ 'Common Services - Evidence Broker' ]
-      summary: 'Extracts procedures referenced by requirements returned by requirements-by-procedure-and-jurisdiction'
-      operationId: getProcedures
-      parameters:
-        - $ref: '#/components/parameters/countryParamMandatory'
-      responses:
-        '200':
-          description: 'Procedures'
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Procedures'
-        '401':
-          $ref: '#/components/responses/UnauthorizedError'
-        '403':
-          description: Forbidden
-        '404':
-          description: Procedures not found
   '/v1/evidence/preview-sessions':
     post:
       tags: [ 'Preview Sessions V1' ]
@@ -199,7 +201,7 @@ paths:
       responses:
         '200':
           $ref: '#/components/responses/EvidencePlainResponse'
-  
+
 security:
   - oAuth2ClientCredentials: [ read ]
 
