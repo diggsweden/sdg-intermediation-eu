@@ -5,6 +5,8 @@ Här finns beskrivningen av API:et för intermediationEU vilket är Diggs interm
 
 [Open-api-specen finns här](https://diggsweden.github.io/sdg-intermediation-eu/)
 
+För frågor om API:et, hör av er till [oss](mailto:sdg@digg.se).
+
 ## Översiktligt flöde
 * Bevishämtning, svenskt onlinfeförarande hämtar bevis från annat medlemsland
 ```mermaid
