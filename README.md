@@ -29,7 +29,6 @@ flowchart LR
             OLF(Onlineförfarande)-->AT
             OLF-->BH
             BH-->OSE
-            BH-->AT
             OSE-->OMS
             OLF-->FG
     
@@ -113,7 +112,7 @@ OF->>AT: Access Token Request(refresh token)
 AT-->OF: Access Token Grant (accesstoken)
 end
 OF->>+BT: POST /preview-sessions (accesstoken)
-BT->>AT: Validate Access Token
+BT->>BT: Validate Access Token
 BT->>OTSE: Bevisbegäran
 OTSE->>OTMS: Bevisbegäran
 OTMS->>MSOF: Bevisbegäran
@@ -150,7 +149,7 @@ end
 5. Om giltighetstiden för accesstoken skulle ha löpt ut kan en ny hämtas mha refreshtoken
 6. Access Token Grant levererar tillbaka ett nytt accesstoken
 7. E-tjänsten inkluderar accesstoken till anropet POST: /evidence/preview-sessions med parametrar för att precisera efterfrågat bevis
-8. Bevishämtningstjänsten validerar bifogat accesstoken POST: /oauth2/authorize
+8. Bevishämtningstjänsten validerar bifogat accesstoken
 9. Bevishämtningstjänsten skapar en bevisbegäran som skickas via OOTS
 10. Bevisbegäran transporteras via den svenska OOTS-noden till den OOTS-nod som finns i det bevisproducerande landet.
 11. Förhandsgranskningstjänsten i bevisproducerande landet tar emot bevisbegäran från OOTS
