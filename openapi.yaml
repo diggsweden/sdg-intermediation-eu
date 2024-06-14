@@ -1,6 +1,6 @@
 openapi: 3.0.3
 info:
-  version: 1.0.0
+  version: 1.1.7
   title: Intermediation EU
   license:
     name: CC0 1.0 Universal
@@ -40,7 +40,7 @@ paths:
       summary: requirements-by-procedure-and-jurisdiction
       externalDocs:
         url: https://ec.europa.eu/digital-building-blocks/sites/pages/viewpage.action?pageId=706382120#id-3.1.4QueryInterfaceSpecificationoftheDSD(December2023)-4.2.Query:FindDataServicesofEvidenceProvidersforaspecificEvidenceTypeClassification
-      operationId: getRequirements
+      operationId: getCsEbRequirements
       parameters:
         - name: procedureId
           in: query
@@ -57,11 +57,14 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Requirements'
+        '400':
+          $ref: '#/components/responses/ErrorResponse'
         '401':
-          $ref: '#/components/responses/UnauthorizedError'
+          $ref: '#/components/responses/ErrorResponse'
         '403':
           description: Forbidden
         '404':
+          $ref: '#/components/responses/ErrorResponse'
           description: Requirements not found
   '/v1/common-services/eb/evidence-types':
     get:
@@ -69,7 +72,7 @@ paths:
       summary: evidence-types-by-requirement-and-jurisdiction
       externalDocs:
         url: https://ec.europa.eu/digital-building-blocks/sites/pages/viewpage.action?pageId=706382141#id-3.2.4QueryInterfaceSpecificationoftheEB(December2023)-4.3.GetEvidenceTypesforRequirementQuery
-      operationId: getEvidenceTypes
+      operationId: getCsEbEvidenceTypes
       parameters:
         - name: requirementId
           in: query
@@ -86,17 +89,20 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/EvidenceTypes'
+        '400':
+          $ref: '#/components/responses/ErrorResponse'
         '401':
-          $ref: '#/components/responses/UnauthorizedError'
+          $ref: '#/components/responses/ErrorResponse'
         '403':
           description: Forbidden
         '404':
+          $ref: '#/components/responses/ErrorResponse'
           description: Evidence not found
   '/v1/common-services/eb/procedures':
     get:
       tags: [ 'Common Services EB V1' ]
       summary: 'Extracts procedures referenced by requirements returned by requirements-by-procedure-and-jurisdiction'
-      operationId: getProcedures
+      operationId: getCsEbProcedures
       parameters:
         - $ref: '#/components/parameters/countryParamMandatory'
       responses:
@@ -106,11 +112,14 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Procedures'
+        '400':
+          $ref: '#/components/responses/ErrorResponse'
         '401':
-          $ref: '#/components/responses/UnauthorizedError'
+          $ref: '#/components/responses/ErrorResponse'
         '403':
           description: Forbidden
         '404':
+          $ref: '#/components/responses/ErrorResponse'
           description: Procedures not found
   '/v1/common-services/dsd/data-services':
     get:
@@ -118,7 +127,7 @@ paths:
       summary: dataservices-by-evidencetype-and-jurisdiction
       externalDocs:
         url: https://ec.europa.eu/digital-building-blocks/sites/pages/viewpage.action?pageId=706382120#id-3.1.4QueryInterfaceSpecificationoftheDSD(December2023)-4.2.Query:FindDataServicesofEvidenceProvidersforaspecificEvidenceTypeClassification
-      operationId: getDataServices
+      operationId: getCsDsdDataServices
       parameters:
         - name: evidenceTypeClassification
           in: query
@@ -145,27 +154,34 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/DataServiceEvidenceType'
+        '400':
+          $ref: '#/components/responses/ErrorResponse'
         '401':
-          $ref: '#/components/responses/UnauthorizedError'
+          $ref: '#/components/responses/ErrorResponse'
         '403':
           description: Forbidden
         '404':
+          $ref: '#/components/responses/ErrorResponse'
           description: Evidence not found
   '/v1/evidence/preview-sessions':
     post:
       tags: [ 'Preview Sessions V1' ]
       summary: Start a preview session
-      operationId: startPreviewSession
+      operationId: postPreviewSession
       requestBody:
         $ref: '#/components/requestBodies/EvidenceRequestBody'
       responses:
         '201':
           $ref: '#/components/responses/PreviewResponseBody'
+        '400':
+          $ref: '#/components/responses/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/ErrorResponse'
   '/v1/evidence/preview-sessions/{conversationId}/files':
     get:
       tags: [ 'Preview Sessions V1' ]
       summary: Retrieve evidence files after preview
-      operationId: retrievePreviewFiles
+      operationId: getPreviewSessionFiles
       parameters:
         - name: conversationId
           in: path
@@ -175,11 +191,15 @@ paths:
       responses:
         '200':
           $ref: '#/components/responses/EvidencePlainResponse'
+        '400':
+          $ref: '#/components/responses/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/ErrorResponse'
   '/v1/evidences':
     post:
       tags: [ 'Evidences V1' ]
       summary: Request and attempt to retrieve evidence directly without preview
-      operationId: requestEvidence
+      operationId: postEvidence
       requestBody:
         $ref: '#/components/requestBodies/EvidenceRequestBody'
       responses:
@@ -187,11 +207,15 @@ paths:
           $ref: '#/components/responses/EvidenceCreatedResponse'
         '202':
           $ref: '#/components/responses/EvidenceDeferredResponse'
+        '400':
+          $ref: '#/components/responses/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/ErrorResponse'
   '/v1/evidences/{conversationId}':
     get:
       tags: [ 'Evidences V1' ]
       summary: Retrieve evidence previously requested directly without preview
-      operationId: retrieveRequestedEvidence
+      operationId: getEvidence
       parameters:
         - name: conversationId
           in: path
@@ -201,6 +225,10 @@ paths:
       responses:
         '200':
           $ref: '#/components/responses/EvidencePlainResponse'
+        '400':
+          $ref: '#/components/responses/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/ErrorResponse'
 
 security:
   - oAuth2ClientCredentials: [ read ]
@@ -219,12 +247,16 @@ components:
   schemas:
     AccessService:
       type: object
-      required: [ id, publisherId ]
+      required: [ identifier ]
       properties:
-        id:
+        identifier:
           $ref: '#/components/schemas/Identifier'
-        publisherId:
-          $ref: '#/components/schemas/Identifier'
+        name:
+          $ref: '#/components/schemas/MultiLingualString'
+        conformsTo:
+          type: string
+        publisher:
+          $ref: '#/components/schemas/Publisher'
     Address:
       type: object
       required: [ fullAddress, locatorDesignator, postCode, postCityName, adminUnitLevel1, adminUnitLevel2 ]
@@ -242,6 +274,11 @@ components:
         adminUnitLevel1:
           type: string
         adminUnitLevel2:
+          type: string
+    CodeType:
+      type: object
+      properties:
+        value:
           type: string
     ConversationId:
       type: string
@@ -268,6 +305,8 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/AccessService'
+        authenticationLevelOfAssurance:
+           $ref: '#/components/schemas/CodeType'
     DistributionFormat:
       type: string
       format: mime-type
@@ -411,7 +450,7 @@ components:
         de: Etwas auf Deutsch.
     Person:
       type: object
-      required: [ familyName, givenName, dateOfBirth ]
+      required: [ identifier, familyName, givenName, dateOfBirth ]
       properties:
         levelOfAssurance:
           type: string
@@ -453,6 +492,18 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Procedure'
+    Publisher:
+      required: [ identifier]
+      type: object
+      properties:
+        identifier:
+          $ref: '#/components/schemas/Identifier'
+        name: 
+          $ref: '#/components/schemas/MultiLingualString'
+        address:
+          $ref: '#/components/schemas/Address'
+        jurisdiction:
+          $ref: '#/components/schemas/JurisdictionType'
     ReferenceFramework:
       type: object
       required: [ identifier ]
@@ -507,6 +558,31 @@ components:
     SwedishOrgNr:
       type: string
       pattern: '\d{6}-\d{4}'
+    ErrorBody:
+      type: object
+      required: [ title, status ]
+      properties:
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        instance:
+          type: string
+        method:
+          type: string
+        additionalInfo:
+          type: array
+          items:
+            type: string
+      example:
+        title: VALIDATION FAILED
+        status: 400
+        detail: Cross validation failed
+        instance: /api/v1/evidence/preview-sessions
+        method: POST
+        additionalInfo: ["Validation assertion R-DSD-ERR_DSD-RESP-01 failed", "Validation assertion R-DSD-RESP_EDM-REQ-04 failed"]
 
   parameters:
     countryParamMandatory:
@@ -606,5 +682,9 @@ components:
             type: string
             format: uri
       content: { }
-    UnauthorizedError:
-      description: Access token is missing or invalid
+    ErrorResponse:
+      description: 'Generic error response'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorBody'
