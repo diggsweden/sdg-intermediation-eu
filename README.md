@@ -149,8 +149,8 @@ end
 5. Om giltighetstiden för accesstoken skulle ha löpt ut kan en ny hämtas mha refreshtoken
 6. Access Token Grant levererar tillbaka ett nytt accesstoken
 7. E-tjänsten inkluderar accesstoken till anropet POST: /evidence/preview-sessions med parametrar för att precisera efterfrågat bevis
-8. Tjänsten för Uppslag och Besvishämtning validerar bifogat accesstoken
-9. Tjänsten för Uppslag och Besvishämtning skapar en bevisbegäran som skickas via OOTS
+8. Tjänsten för Uppslag och Bevishämtning validerar bifogat accesstoken
+9. Tjänsten för Uppslag och Bevishämtning skapar en bevisbegäran som skickas via OOTS
 10. Bevisbegäran transporteras via den svenska OOTS-noden till den OOTS-nod som finns i det bevisproducerande landet.
 11. Förhandsgranskningstjänsten i bevisproducerande landet tar emot bevisbegäran från OOTS
 12. Förhandsgranskningstjänsten skapar en unik och tidsbegränsad länk.
@@ -158,7 +158,7 @@ end
 14. Transport av bevissvar mellan OOTS-noder.
 15. Bevissvaret levereras till Bevishämtningstjänsten
 16. Bevissvaret innehållandes länk till förhandsgranskning samt conversationId returneras till e-tjänsten
-17. Tjänsten för Uppslag och Besvishämtning skickar bevisbegäran nr 2 vilken nu även innhåller förhandsgranskningslänken.
+17. Tjänsten för Uppslag och Bevishämtning skickar bevisbegäran nr 2 vilken nu även innehåller förhandsgranskningslänken.
 18. Bevisbegäran nr 2 skickas över OOTS.
 19. E-tjänsten låter browsern veta adressen till förhandsgranskningstjänsten.
 20. Browsern omdirigerar användaren till förhandsgranskningstjänsten i det bevisproducerande landet.
