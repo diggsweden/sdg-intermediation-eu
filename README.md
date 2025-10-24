@@ -8,7 +8,7 @@ Här finns beskrivningen av API:et för intermediationEU vilket är Diggs interm
 För frågor om API:et, hör av er till [oss](mailto:sdg@digg.se).
 
 ## Översiktligt flöde
-* Bevishämtning, svenskt onlinfeförarande hämtar bevis från annat medlemsland
+* Bevishämtning, svenskt onlineförfarande hämtar bevis från annat medlemsland
 ```mermaid
 flowchart LR
     subgraph Common Services
@@ -40,7 +40,7 @@ flowchart LR
 
 ### Flödesbeskrivning översiktligt flöde
 
-* Använderaren i ett onlineförfarande vill hämta ett bevis från annat medlemsland
+* Användaren i ett onlineförfarande vill hämta ett bevis från annat medlemsland
 * Användaren väljer bevistyp
 * E-tjänsten skickar en signerad begäran om åtkomstintyg till SDG Auktorisationstjänst
 * Auktorisationstjänsten validerar begäran och kontrollerar att e-tjänsten tillhör en behörig myndighet
@@ -48,7 +48,7 @@ flowchart LR
 * E-tjänsten anropar Bevishämtningstjänsten och bifogar åtkomstintyget
 * Bevishämtningstjänsten validerar att åtkomstintyget är signerat av betrodd auktorisationstjänst
 * Bevishämtningstjänsten gör en bevisbegäran via en svenska  accesspunkten OOTS-SE
-* Andvändaren omdirigeras till bevislämnande lands förhandsgranskningstjänst
+* Användaren omdirigeras till bevislämnande lands förhandsgranskningstjänst
 * Användaren väljer att dela beviset i förhandsgranskningstjänsten varpå beviset levereras över OOTS till bevishämtningstjänsten
 * Onlineförfarandet hämtar beviset och låter användaren nyttja det i e-tjänsten
 
@@ -76,7 +76,7 @@ W->>OF: Välj bevistyp
 ```
 
 ### Flödesbeskrivning: Uppslag av bevistyp
-1. Användaren i onlineförfarandet väljer från vilket land bevis ska hämtas.
+1. Användaren i onlineförfarandet väljer från vilket land beviset ska hämtas.
 2. E-tjänsten vet vilka beviskrav den har och anropar bevismetadatakatalogen för att lista bevistyper för beviskrav och land.
 3. Lista av bevistyper returneras.
 4. E-tjänsten presenterar listan av bevistyper
@@ -143,14 +143,14 @@ end
 
 ### Flödesbeskrivning detaljerat flöde
 1. Användaren initierar en bevishämtning via e-tjänst.
-2. Användaren authentiserar sig via eIDAS
+2. Användaren autentiserar sig via eIDAS
 3. E-tjänsten begär accesstoken från auktorisationstjänsten POST: /oauth2/token
 4. Auktorisationstjänsten svarar med en Access Token Grant
 5. Om giltighetstiden för accesstoken skulle ha löpt ut kan en ny hämtas mha refreshtoken
 6. Access Token Grant levererar tillbaka ett nytt accesstoken
 7. E-tjänsten inkluderar accesstoken till anropet POST: /evidence/preview-sessions med parametrar för att precisera efterfrågat bevis
-8. Bevishämtningstjänsten validerar bifogat accesstoken
-9. Bevishämtningstjänsten skapar en bevisbegäran som skickas via OOTS
+8. Tjänsten för Uppslag och Besvishämtning validerar bifogat accesstoken
+9. Tjänsten för Uppslag och Besvishämtning skapar en bevisbegäran som skickas via OOTS
 10. Bevisbegäran transporteras via den svenska OOTS-noden till den OOTS-nod som finns i det bevisproducerande landet.
 11. Förhandsgranskningstjänsten i bevisproducerande landet tar emot bevisbegäran från OOTS
 12. Förhandsgranskningstjänsten skapar en unik och tidsbegränsad länk.
@@ -158,7 +158,7 @@ end
 14. Transport av bevissvar mellan OOTS-noder.
 15. Bevissvaret levereras till Bevishämtningstjänsten
 16. Bevissvaret innehållandes länk till förhandsgranskning samt conversationId returneras till e-tjänsten
-17. Besvishämtningstjänsten skickar det bevisbegäran nr 2 vilken nu även innhåller förhandsgranskningslänken.
+17. Tjänsten för Uppslag och Besvishämtning skickar bevisbegäran nr 2 vilken nu även innhåller förhandsgranskningslänken.
 18. Bevisbegäran nr 2 skickas över OOTS.
 19. E-tjänsten låter browsern veta adressen till förhandsgranskningstjänsten.
 20. Browsern omdirigerar användaren till förhandsgranskningstjänsten i det bevisproducerande landet.
