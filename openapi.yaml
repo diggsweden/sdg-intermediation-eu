@@ -1,75 +1,120 @@
 openapi: 3.0.3
 info:
-  version: 1.1.7
+  version: 2.0.0
   title: Intermediation EU
+  contact:
+    name: API Support
+    url: https://www.digg.se/digitala-tjanster/tekniska-systemet-for-gransoverskridande-automatiskt-utbyte-av-bevis---oots
+    email: sdg@digg.se
   license:
     name: CC0 1.0 Universal
     url: https://creativecommons.org/publicdomain/zero/1.0/legalcode.sv
+  termsOfService: https://github.com/diggsweden/sdg-intermediation-eu/blob/main/TERMS_OF_SERVICE.md
   description: |
     This is the API for previewing evidences to be consumed in a Swedish procedure. 
     It covers both the retrieval of the preview link to a preview space as well as the actual 
     retrieval of the evidence.
+
+    Detta API används för att förhandsgranska bevis så att de kan användas i svenska förfaranden.
+    Det täcker in både att hämta länken för förhandsgransking i en förhandsgranskningstjänst och att sedan hämta det aktuella beviset.
+
+    # Common Services
+    This API also provides operations to query Evidence Broker and Data Service Directory of the Common Services.
+    Data from Common Services is required input to access evidences directly or via preview spaces
+
     # Authorization
-    For accessing any of the endpoints the requester needs to provide an authorization header with required token.
-    
+    For accessing any of the endpoints the requester needs to provide an authorization header with an access token acquired from the Authorization Server provided by Digg.
+
     An example for how to use bearerAuth:
     ``` 
     Authorization: Bearer <jwt-token>
     ```
-
+  x-limitations: There are no known problems or limitations.
+externalDocs:
+  description: Further documentation of this API is provided at GitHub.
+  url: https://github.com/diggsweden/sdg-intermediation-eu/blob/main/README.md
 tags:
-  - name: 'Common Services EB V1'
-    description: 'Common Services Evidence Broker'
-  - name: 'Common Services DSD V1'
-    description: 'Common Services Data Service Directory'
-  - name: 'Preview Sessions V1'
-    description: 'Requests for Evidence involving review'
-  - name: 'Evidences V1'
-    description: 'Evidences directly without review'
+  - name: "API-info"
+    description: "Info about this API"
+  - name: "Common Services EB"
+    description: "Common Services Evidence Broker"
+  - name: "Common Services DSD"
+    description: "Common Services Data Service Directory"
+  - name: "Preview Sessions"
+    description: "Requests for Evidence involving preview"
+  - name: "Evidences"
+    description: "Evidences directly without preview"
+  - name: "Evidences selector link"
+    description: "Request a link to Evidences selector frontend"
 
 servers:
-  - url: 'http://localhost:9300'
-    description: 'Local dev environment'
-  - url: 'https://sdg-intermediation-eu-digg-sdg-build.apps.diggdev.capdigg.sgit.se'
-    description: 'DEV environment'
+  - url: "https://intermediation-eu.oots.digg.se/api/v2"
 
 paths:
-  '/v1/common-services/eb/requirements':
+  "/api-info":
     get:
-      tags: [ 'Common Services EB V1' ]
+      tags: [API-info]
+      summary: Returns API metadata
+      description: Returns API metadata
+      operationId: apiInfo
+      security: []
+      responses:
+        "200":
+          $ref: "#/components/responses/ApiInfoResponse"
+  "/common-services/eb/requirements":
+    get:
+      tags: ["Common Services EB"]
       summary: requirements-by-procedure-and-jurisdiction
+      description: requirements-by-procedure-and-jurisdiction
       externalDocs:
         url: https://ec.europa.eu/digital-building-blocks/sites/pages/viewpage.action?pageId=706382120#id-3.1.4QueryInterfaceSpecificationoftheDSD(December2023)-4.2.Query:FindDataServicesofEvidenceProvidersforaspecificEvidenceTypeClassification
       operationId: getCsEbRequirements
       parameters:
         - name: procedureId
           in: query
-          required: false
           schema:
-            $ref: '#/components/schemas/ProcedureId'
-        - $ref: '#/components/parameters/countryParamOptional'
-        - $ref: '#/components/parameters/adminL2Param'
-        - $ref: '#/components/parameters/adminL3Param'
+            $ref: "#/components/schemas/ProcedureId"
+        - $ref: "#/components/parameters/countryParamOptional"
+        - $ref: "#/components/parameters/adminLevelTwoParam"
+        - $ref: "#/components/parameters/adminLevelThreeParam"
       responses:
-        '200':
-          description: 'Requirement'
+        "200":
+          description: "Requirement"
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Requirements'
-        '400':
-          $ref: '#/components/responses/ErrorResponse'
-        '401':
-          $ref: '#/components/responses/ErrorResponse'
-        '403':
-          description: Forbidden
-        '404':
-          $ref: '#/components/responses/ErrorResponse'
-          description: Requirements not found
-  '/v1/common-services/eb/evidence-types':
+                $ref: "#/components/schemas/Requirements"
+              examples:
+                requirementsResponseExample:
+                  $ref: "#/components/examples/RequirementsResponseExample"
+        "400":
+          description: "Bad request"
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorBody"
+              examples:
+                eConstrainstViolationErrorResponseExample:
+                  $ref: "#/components/examples/EbConstrainstViolationErrorResponseExample"
+        "401":
+          $ref: "#/components/responses/InvalidAccessTokenResponse"
+        "404":
+          description: "Requirements not found"
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorBody"
+              examples:
+                eConstrainstViolationErrorResponseExample:
+                  $ref: "#/components/examples/EbRequirementsNotFoundResponseExample"
+        "500":
+          $ref: "#/components/responses/ErrorResponse"
+
+  "/common-services/eb/evidence-types/":
     get:
-      tags: [ 'Common Services EB V1' ]
+      tags: ["Common Services EB"]
       summary: evidence-types-by-requirement-and-jurisdiction
+      description: evidence-types-by-requirement-and-jurisdiction
       externalDocs:
         url: https://ec.europa.eu/digital-building-blocks/sites/pages/viewpage.action?pageId=706382141#id-3.2.4QueryInterfaceSpecificationoftheEB(December2023)-4.3.GetEvidenceTypesforRequirementQuery
       operationId: getCsEbEvidenceTypes
@@ -78,160 +123,213 @@ paths:
           in: query
           required: true
           schema:
-            $ref: '#/components/schemas/RequirementId'
-        - $ref: '#/components/parameters/countryParamOptional'
-        - $ref: '#/components/parameters/adminL2Param'
-        - $ref: '#/components/parameters/adminL3Param'
+            $ref: "#/components/schemas/RequirementId"
+        - $ref: "#/components/parameters/countryParamOptional"
+        - $ref: "#/components/parameters/adminLevelTwoParam"
+        - $ref: "#/components/parameters/adminLevelThreeParam"
       responses:
-        '200':
+        "200":
           description: Success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/EvidenceTypes'
-        '400':
-          $ref: '#/components/responses/ErrorResponse'
-        '401':
-          $ref: '#/components/responses/ErrorResponse'
-        '403':
-          description: Forbidden
-        '404':
-          $ref: '#/components/responses/ErrorResponse'
-          description: Evidence not found
-  '/v1/common-services/eb/procedures':
+                $ref: "#/components/schemas/EvidenceTypes"
+              examples:
+                evidenceTypesExample:
+                  $ref: "#/components/examples/evidenceTypesExample"
+        "400":
+          $ref: "#/components/responses/BadRequestErrorResponse"
+        "401":
+          $ref: "#/components/responses/InvalidAccessTokenResponse"
+        "404":
+          description: "Evidence type not found"
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorBody"
+              examples:
+                ebEvidenceTypeNotFoundResponseExample:
+                  $ref: "#/components/examples/EbEvidenceTypeNotFoundResponseExample"
+        "500":
+          $ref: "#/components/responses/ErrorResponse"
+  "/common-services/eb/procedures":
     get:
-      tags: [ 'Common Services EB V1' ]
-      summary: 'Extracts procedures referenced by requirements returned by requirements-by-procedure-and-jurisdiction'
+      tags: ["Common Services EB"]
+      summary: "Extracts procedures referenced by requirements returned by requirements-by-procedure-and-jurisdiction"
+      description: "Extracts procedures referenced by requirements returned by requirements-by-procedure-and-jurisdiction"
       operationId: getCsEbProcedures
       parameters:
-        - $ref: '#/components/parameters/countryParamMandatory'
+        - $ref: "#/components/parameters/countryParamOptional"
       responses:
-        '200':
-          description: 'Procedures'
+        "200":
+          description: "Procedures"
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Procedures'
-        '400':
-          $ref: '#/components/responses/ErrorResponse'
-        '401':
-          $ref: '#/components/responses/ErrorResponse'
-        '403':
-          description: Forbidden
-        '404':
-          $ref: '#/components/responses/ErrorResponse'
-          description: Procedures not found
-  '/v1/common-services/dsd/data-services':
+                $ref: "#/components/schemas/Procedures"
+              examples:
+                proceduresResponseExample:
+                  $ref: "#/components/examples/ProceduresResponseExample"
+        "400":
+          $ref: "#/components/responses/BadRequestErrorResponse"
+        "401":
+          $ref: "#/components/responses/InvalidAccessTokenResponse"
+        "404":
+          description: "Procedure not found"
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorBody"
+              examples:
+                ebProcedureNotFoundResponseExample:
+                  $ref: "#/components/examples/EbProceduresNotFoundResponseExample"
+        "500":
+          $ref: "#/components/responses/ErrorResponse"
+  "/common-services/dsd/data-services/{countryCode}":
     get:
-      tags: [ 'Common Services DSD V1' ]
+      tags: ["Common Services DSD"]
       summary: dataservices-by-evidencetype-and-jurisdiction
-      externalDocs:
-        url: https://ec.europa.eu/digital-building-blocks/sites/pages/viewpage.action?pageId=706382120#id-3.1.4QueryInterfaceSpecificationoftheDSD(December2023)-4.2.Query:FindDataServicesofEvidenceProvidersforaspecificEvidenceTypeClassification
+      description: dataservices-by-evidencetype-and-jurisdiction
       operationId: getCsDsdDataServices
       parameters:
-        - name: evidenceTypeClassification
-          in: query
+        - name: countryCode
+          in: path
           required: true
           schema:
-            $ref: '#/components/schemas/EvidenceTypeClassification'
-        - $ref: '#/components/parameters/countryParamMandatory'
-        - $ref: '#/components/parameters/adminL2Param'
-        - $ref: '#/components/parameters/adminL3Param'
+            $ref: "#/components/schemas/Country"
+        - name: evidenceTypeClassification
+          in: query
+          schema:
+            $ref: "#/components/schemas/EvidenceTypeClassification"
+
+        - $ref: "#/components/parameters/adminLevelTwoParam"
+        - $ref: "#/components/parameters/adminLevelThreeParam"
         - name: jurisdictionContextId
           in: query
-          required: false
           schema:
             type: string
         - name: evidenceTypeId
           in: query
-          required: false
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: Success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/DataServiceEvidenceType'
-        '400':
-          $ref: '#/components/responses/ErrorResponse'
-        '401':
-          $ref: '#/components/responses/ErrorResponse'
-        '403':
-          description: Forbidden
-        '404':
-          $ref: '#/components/responses/ErrorResponse'
-          description: Evidence not found
-  '/v1/evidence/preview-sessions':
+                $ref: "#/components/schemas/DataServiceEvidenceType"
+              example:
+                DataServiceEvidenceTypeExample:
+                  $ref: "#/components/examples/DataServiceEvidenceTypeExample"
+        "400":
+          $ref: "#/components/responses/BadRequestErrorResponse"
+        "401":
+          $ref: "#/components/responses/InvalidAccessTokenResponse"
+        "404":
+          description: "Data Service not found"
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorBody"
+              examples:
+                dsdNotFoundResponseExample:
+                  $ref: "#/components/examples/DsdNotFoundErrorResponseExample"
+        "500":
+          $ref: "#/components/responses/ErrorResponse"
+  "/evidence/preview-sessions":
     post:
-      tags: [ 'Preview Sessions V1' ]
+      tags: ["Preview Sessions"]
       summary: Start a preview session
+      description: Start a preview session
       operationId: postPreviewSession
       requestBody:
-        $ref: '#/components/requestBodies/EvidenceRequestBody'
+        $ref: "#/components/requestBodies/EvidenceRequestBody"
       responses:
-        '201':
-          $ref: '#/components/responses/PreviewResponseBody'
-        '400':
-          $ref: '#/components/responses/ErrorResponse'
-        '401':
-          $ref: '#/components/responses/ErrorResponse'
-  '/v1/evidence/preview-sessions/{conversationId}/files':
+        "201":
+          $ref: "#/components/responses/PreviewResponseBody"
+        "400":
+          $ref: "#/components/responses/BadRequestErrorResponse"
+        "401":
+          $ref: "#/components/responses/InvalidAccessTokenResponse"
+        "409":
+          $ref: "#/components/responses/ConflictResponse"
+        "500":
+          $ref: "#/components/responses/ErrorResponse"
+        "504":
+          $ref: "#/components/responses/TimeoutResponse"
+  "/evidence/preview-sessions/{conversationId}/files":
     get:
-      tags: [ 'Preview Sessions V1' ]
+      tags: ["Preview Sessions"]
       summary: Retrieve evidence files after preview
+      description: Retrieve evidence files after preview
       operationId: getPreviewSessionFiles
       parameters:
         - name: conversationId
           in: path
           required: true
           schema:
-            $ref: '#/components/schemas/ConversationId'
+            $ref: "#/components/schemas/ConversationId"
       responses:
-        '200':
-          $ref: '#/components/responses/EvidencePlainResponse'
-        '400':
-          $ref: '#/components/responses/ErrorResponse'
-        '401':
-          $ref: '#/components/responses/ErrorResponse'
-  '/v1/evidences':
+        "200":
+          $ref: "#/components/responses/EvidencePlainResponse"
+        "202":
+          $ref: "#/components/responses/ProcessingOrDeferredEvidenceResponse"
+        "400":
+          $ref: "#/components/responses/InvalidConversationIdResponse"
+        "401":
+          $ref: "#/components/responses/InvalidAccessTokenResponse"
+        "404":
+          $ref: "#/components/responses/EvidenceExchangeNotFoundResponse"
+        "500":
+          $ref: "#/components/responses/ErrorResponse"
+        "504":
+          $ref: "#/components/responses/TimeoutResponse"
+
+  "/evidences":
     post:
-      tags: [ 'Evidences V1' ]
+      tags: ["Evidences"]
       summary: Request and attempt to retrieve evidence directly without preview
+      description: Request and attempt to retrieve evidence directly without preview
       operationId: postEvidence
       requestBody:
-        $ref: '#/components/requestBodies/EvidenceRequestBody'
+        $ref: "#/components/requestBodies/EvidenceRequestBody"
       responses:
-        '201':
-          $ref: '#/components/responses/EvidenceCreatedResponse'
-        '202':
-          $ref: '#/components/responses/EvidenceDeferredResponse'
-        '400':
-          $ref: '#/components/responses/ErrorResponse'
-        '401':
-          $ref: '#/components/responses/ErrorResponse'
-  '/v1/evidences/{conversationId}':
-    get:
-      tags: [ 'Evidences V1' ]
-      summary: Retrieve evidence previously requested directly without preview
-      operationId: getEvidence
-      parameters:
-        - name: conversationId
-          in: path
-          required: true
-          schema:
-            $ref: '#/components/schemas/ConversationId'
+        "200":
+          $ref: "#/components/responses/EvidencePlainResponse"
+        "202":
+          $ref: "#/components/responses/ProcessingEvidenceResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestErrorResponse"
+        "401":
+          $ref: "#/components/responses/InvalidAccessTokenResponse"
+        "409":
+          $ref: "#/components/responses/ConflictResponse"
+        "500":
+          $ref: "#/components/responses/ErrorResponse"
+        "504":
+          $ref: "#/components/responses/TimeoutResponse"
+
+  "/selector-link":
+    post:
+      tags: ["Evidences selector link"]
+      summary: Request a temporary link to evidence selector frontend
+      description: Request a temporary link to evidence selector frontend
+      operationId: postEvidenceSelectorLink
+      requestBody:
+        $ref: "#/components/requestBodies/EvidenceSelectorLinkRequest"
       responses:
-        '200':
-          $ref: '#/components/responses/EvidencePlainResponse'
-        '400':
-          $ref: '#/components/responses/ErrorResponse'
-        '401':
-          $ref: '#/components/responses/ErrorResponse'
+        "201":
+          $ref: "#/components/responses/EvidenceSelectorLinkResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestErrorResponse"
+        "401":
+          $ref: "#/components/responses/InvalidAccessTokenResponse"
+        "500":
+          $ref: "#/components/responses/ErrorResponse"
 
 security:
-  - oAuth2ClientCredentials: [ read ]
+  - oAuth2ClientCredentials: [read]
 
 components:
   securitySchemes:
@@ -240,41 +338,49 @@ components:
       description: See https://docs.swedenconnect.se/technical-framework/sdg/sdg-oauth2-profile.html
       flows:
         clientCredentials:
-          tokenUrl: /oauth2/token/
+          tokenUrl: https://auth.accept.digg.se/oauth2/token
           scopes:
             read: Grant read-only access
 
   schemas:
     AccessService:
       type: object
-      required: [ identifier ]
+      required: [identifier]
       properties:
         identifier:
-          $ref: '#/components/schemas/Identifier'
+          $ref: "#/components/schemas/Identifier"
         name:
-          $ref: '#/components/schemas/MultiLingualString'
+          $ref: "#/components/schemas/MultiLingualString"
         conformsTo:
-          type: string
+          type: array
+          items:
+            type: string
         publisher:
-          $ref: '#/components/schemas/Publisher'
+          $ref: "#/components/schemas/Publisher"
     Address:
       type: object
-      required: [ fullAddress, locatorDesignator, postCode, postCityName, adminUnitLevel1, adminUnitLevel2 ]
+      required: [fullAddress, locatorDesignator, postCode, postCityName, adminUnitLevelOne, adminUnitLevelTwo]
       properties:
         fullAddress:
           type: string
+          minLength: 1
         locatorDesignator:
           type: string
+          minLength: 1
         postCode:
           type: string
+          minLength: 1
         postCityName:
           type: string
+          minLength: 1
         thoroughfare:
           type: string
-        adminUnitLevel1:
+        adminUnitLevelOne:
           type: string
-        adminUnitLevel2:
+          minLength: 1
+        adminUnitLevelTwo:
           type: string
+          minLength: 1
     CodeType:
       type: object
       properties:
@@ -283,33 +389,31 @@ components:
     ConversationId:
       type: string
       format: uuid
+      example: "ff8919ba-740b-3ec3-bbe4-15f9ace4ca41"
     Country:
       type: string
-      # NOTE 'EC' is not a EU country but is returned by common services.
-      enum: [ AT, BE, BG, CY, CZ, DE, DK, EE, EL, ES, FI, FR, HR, HU, IE, IT, LT, LU, LV, MT, NL, PL, PT, RO, SE, SI, SK, EC ]
+      nullable: false
     DataServiceEvidenceType:
       type: object
-      required: [ identifier, evidenceTypeClassification, title, distributedAs, accessServices ]
+      required: [identifier, evidenceTypeClassification, title, distributedAs, accessService]
       properties:
         identifier:
-          $ref: '#/components/schemas/Identifier'
+          $ref: "#/components/schemas/Identifier"
         evidenceTypeClassification:
-          $ref: '#/components/schemas/EvidenceTypeClassification'
+          $ref: "#/components/schemas/EvidenceTypeClassification"
         title:
-          $ref: '#/components/schemas/MultiLingualString'
+          $ref: "#/components/schemas/MultiLingualString"
         distributedAs:
           type: array
           items:
-            $ref: '#/components/schemas/EvidenceTypeDistributionType'
-        accessServices:
-          type: array
-          items:
-            $ref: '#/components/schemas/AccessService'
+            $ref: "#/components/schemas/EvidenceTypeDistributionType"
+        accessService:
+          $ref: "#/components/schemas/AccessService"
         authenticationLevelOfAssurance:
-           $ref: '#/components/schemas/CodeType'
+          $ref: "#/components/schemas/CodeType"
     DistributionFormat:
       type: string
-      format: mime-type
+      minLength: 1
     EvidenceFile:
       type: object
       properties:
@@ -328,19 +432,20 @@ components:
             id:
               type: string
             name:
-              $ref: '#/components/schemas/MultiLingualString'
+              $ref: "#/components/schemas/MultiLingualString"
         isConformantTo:
           type: object
           properties:
             evidenceTypeClassification:
               type: string
             description:
-              $ref: '#/components/schemas/MultiLingualString'
+              $ref: "#/components/schemas/MultiLingualString"
             title:
-              $ref: '#/components/schemas/MultiLingualString'
+              $ref: "#/components/schemas/MultiLingualString"
         issuingDate:
           type: string
           format: date
+          example: "2024-03-15"
         distribution:
           type: object
           properties:
@@ -365,36 +470,34 @@ components:
               format: date
     EvidenceFilesBody:
       type: object
-      required: [ evidenceFiles ]
+      required: [evidenceFiles]
       properties:
-        conversationId:
-          $ref: '#/components/schemas/ConversationId'
         evidenceFiles:
           type: array
           items:
-            $ref: '#/components/schemas/EvidenceFile'
+            $ref: "#/components/schemas/EvidenceFile"
     EvidenceType:
       type: object
       properties:
         evidenceTypeClassification:
-          $ref: '#/components/schemas/EvidenceTypeClassification'
+          $ref: "#/components/schemas/EvidenceTypeClassification"
         title:
-          $ref: '#/components/schemas/MultiLingualString'
+          $ref: "#/components/schemas/MultiLingualString"
         description:
-          $ref: '#/components/schemas/MultiLingualString'
+          $ref: "#/components/schemas/MultiLingualString"
         jurisdictions:
           type: array
           items:
-            $ref: '#/components/schemas/JurisdictionType'
+            $ref: "#/components/schemas/JurisdictionType"
     EvidenceTypeClassification:
       type: string
       format: uri
     EvidenceTypeDistributionType:
       type: object
-      required: [ format ]
+      required: [format]
       properties:
         format:
-          $ref: '#/components/schemas/DistributionFormat'
+          $ref: "#/components/schemas/DistributionFormat"
         transformation:
           type: string
     EvidenceTypes:
@@ -403,7 +506,7 @@ components:
         evidenceTypes:
           type: array
           items:
-            $ref: '#/components/schemas/EvidenceType'
+            $ref: "#/components/schemas/EvidenceType"
     Gender:
       type: string
       enum:
@@ -412,77 +515,86 @@ components:
         - UNSPECIFIED
     Identifier:
       type: object
-      required: [ value ]
+      required: [value]
       properties:
         schemeId:
           type: string
         value:
           type: string
-    JurisdictionAdminL2:
+          minLength: 1
+    JurisdictionAdminLevelTwo:
       type: string
       minLength: 3
       maxLength: 5
       description: The level two administration code for a specific jurisdiction context expressed using 3 to 5 letter NUTS code.
-      example: AT
+      example: SE321
       externalDocs:
         url: https://code.europa.eu/oots/tdd/tdd_chapters/-/blob/master/OOTS-EDM/codelists/External/NutsCodes.gc
-    JurisdictionAdminL3:
+    JurisdictionAdminLevelThree:
       type: string
       description: The level three administration code for a specific jurisdiction context expressed using LAU Code.
       example: 21001
       externalDocs:
         url: https://code.europa.eu/oots/tdd/tdd_chapters/-/blob/master/OOTS-EDM/codelists/OOTS/LAU2022-CodeList.gc
     JurisdictionType:
+      type: object
       properties:
-        AdminUnitLevel1:
-          $ref: '#/components/schemas/Country'
-        AdminUnitLevel2:
-          $ref: '#/components/schemas/JurisdictionAdminL2'
-        AdminUnitLevel3:
-          $ref: '#/components/schemas/JurisdictionAdminL3'
+        adminUnitLevelOne:
+          $ref: "#/components/schemas/Country"
+        adminUnitLevelTwo:
+          $ref: "#/components/schemas/JurisdictionAdminLevelTwo"
+        adminUnitLevelThree:
+          $ref: "#/components/schemas/JurisdictionAdminLevelThree"
     MultiLingualString:
-      description: 'String in various languages'
+      description: "String in various languages"
       type: object
       additionalProperties:
         type: string
       example:
-        en: Something in English.
-        de: Etwas auf Deutsch.
-    Person:
+        EN: Something in English.
+        DE: Etwas auf Deutsch.
+    NaturalPerson:
       type: object
-      required: [ identifier, familyName, givenName, dateOfBirth ]
+      required: [familyName, givenName, dateOfBirth]
       properties:
         levelOfAssurance:
           type: string
         identifier:
+          description: eIDAS unique identifier.
           type: string
+          example: "SE/IT/197309069289"
         familyName:
           type: string
+          minLength: 1
         givenName:
           type: string
+          minLength: 1
         dateOfBirth:
           type: string
           format: date
-        birthName:
-          type: string
+          example: "2024-03-15"
         placeOfBirth:
           type: string
         currentAddress:
-          $ref: '#/components/schemas/Address'
+          $ref: "#/components/schemas/Address"
         gender:
-          $ref: '#/components/schemas/Gender'
+          $ref: "#/components/schemas/Gender"
     Procedure:
-      required: [ identifier ]
+      type: object
+      required: [identifier, name]
       properties:
+        name:
+          type: string
         identifier:
           type: string
+          minLength: 1
         requirements:
           type: array
           items:
-            $ref: '#/components/schemas/Requirement'
+            $ref: "#/components/schemas/Requirement"
     ProcedureId:
       type: string
-      example: 'R1'
+      example: "R1"
       externalDocs:
         url: https://code.europa.eu/oots/tdd/tdd_chapters/-/blob/master/OOTS-EDM/codelists/OOTS/Procedures-CodeList.gc
     Procedures:
@@ -491,79 +603,88 @@ components:
         procedure:
           type: array
           items:
-            $ref: '#/components/schemas/Procedure'
+            $ref: "#/components/schemas/Procedure"
     Publisher:
-      required: [ identifier]
+      required: [identifier]
       type: object
       properties:
         identifier:
-          $ref: '#/components/schemas/Identifier'
-        name: 
-          $ref: '#/components/schemas/MultiLingualString'
+          $ref: "#/components/schemas/Identifier"
+        name:
+          $ref: "#/components/schemas/MultiLingualString"
         address:
-          $ref: '#/components/schemas/Address'
+          $ref: "#/components/schemas/Address"
         jurisdiction:
-          $ref: '#/components/schemas/JurisdictionType'
+          $ref: "#/components/schemas/JurisdictionType"
     ReferenceFramework:
       type: object
-      required: [ identifier ]
+      required: [identifier]
       properties:
         identifier:
-          $ref: '#/components/schemas/Identifier'
+          $ref: "#/components/schemas/SimpleIdentifier"
         title:
-          $ref: '#/components/schemas/MultiLingualString'
+          $ref: "#/components/schemas/MultiLingualString"
         description:
-          $ref: '#/components/schemas/MultiLingualString'
+          $ref: "#/components/schemas/MultiLingualString"
         relatedTo:
           type: array
           items:
-            $ref: '#/components/schemas/ReferenceFramework'
+            $ref: "#/components/schemas/ReferenceFramework"
+    SimpleIdentifier:
+      type: string
+      example: f8ea170d-09fc-4381-88d3-645fa978c132
     RequesterAgent:
       type: object
-      required: [ organisationNumber, name ]
+      required: [organizationIdentifier, name]
       properties:
-        organisationNumber:
-          $ref: '#/components/schemas/SwedishOrgNr'
+        organizationIdentifier:
+          $ref: "#/components/schemas/OrganizationNumber"
         name:
-          $ref: '#/components/schemas/MultiLingualString'
+          $ref: "#/components/schemas/MultiLingualString"
         address:
-          $ref: '#/components/schemas/Address'
+          $ref: "#/components/schemas/Address"
     Requirement:
       type: object
-      required: [ id, name, country ]
+      required: [id, name, countries]
       properties:
         id:
-          $ref: '#/components/schemas/RequirementId'
+          $ref: "#/components/schemas/RequirementId"
         name:
-          $ref: '#/components/schemas/MultiLingualString'
+          $ref: "#/components/schemas/MultiLingualString"
         countries:
           type: array
           items:
-            $ref: '#/components/schemas/Country'
+            $ref: "#/components/schemas/Country"
         referenceFramework:
           type: array
           items:
-            $ref: '#/components/schemas/ReferenceFramework'
+            $ref: "#/components/schemas/ReferenceFramework"
     RequirementId:
       description: Describing the needs of the procedure with regard to the evidence request or a particular piece of information
       type: string
       format: uri
+      example: "https://sr.acc.oots.tech.ec.europa.eu/requirements/ff8919ba-740b-3ec3-bbe4-15f9ace4ca41"
     Requirements:
       type: object
       properties:
         requirements:
           type: array
           items:
-            $ref: '#/components/schemas/Requirement'
-    SwedishOrgNr:
+            $ref: "#/components/schemas/Requirement"
+    OrganizationNumber:
+      description: Identifier of an organization, provided as a Swedish organization number (organisationsnummer).
       type: string
-      pattern: '\d{6}-\d{4}'
+      pattern: '\d{10}'
+      example: "2021006883"
     ErrorBody:
       type: object
-      required: [ title, status ]
+      required: [title, status]
       properties:
+        type:
+          type: string
         title:
           type: string
+          minLength: 1
         status:
           type: integer
         detail:
@@ -572,43 +693,51 @@ components:
           type: string
         method:
           type: string
+          description: HTTP method used in the request (e.g., POST, GET, PUT, DELETE)
         additionalInfo:
           type: array
           items:
             type: string
-      example:
-        title: VALIDATION FAILED
-        status: 400
-        detail: Cross validation failed
-        instance: /api/v1/evidence/preview-sessions
-        method: POST
-        additionalInfo: ["Validation assertion R-DSD-ERR_DSD-RESP-01 failed", "Validation assertion R-DSD-RESP_EDM-REQ-04 failed"]
+    DeferredEvidenceResponseBody:
+      title: "DeferredEvidenceResponseBody"
+      description: "Empty JSON body used for 202 deferred responses. It might be possible to fetch later."
+      type: object
+      additionalProperties: false
+    ProcessingEvidenceResponseBody:
+      title: "ProcessingEvidenceResponseBody"
+      description: "The ProcessingEvidenceResponseBody object includes information about an estimate of when the evidence is available (Delayed evidence)"
+      type: object
+      properties:
+        estimatedAvailability:
+          description: "Describes an estimate in RFC 3339 date/time when the evidence is available"
+          type: string
+        evidenceResponseType:
+          type: string
+          enum: [ProcessingEvidenceResponse]
+      required: [estimatedAvailability, evidenceResponseType]
 
   parameters:
-    countryParamMandatory:
-      name: countryCode
-      in: query
-      required: true
-      schema:
-        $ref: '#/components/schemas/Country'
     countryParamOptional:
       name: countryCode
       in: query
       required: false
       schema:
-        $ref: '#/components/schemas/Country'
-    adminL2Param:
-      name: jurisdictionAdminL2
+        $ref: "#/components/schemas/Country"
+      example: "SE"
+    adminLevelTwoParam:
+      name: jurisdictionAdminLevelTwo
       in: query
       required: false
       schema:
-        $ref: '#/components/schemas/JurisdictionAdminL2'
-    adminL3Param:
-      name: jurisdictionAdminL3
+        $ref: "#/components/schemas/JurisdictionAdminLevelTwo"
+      example: "SE321"
+    adminLevelThreeParam:
+      name: jurisdictionAdminLevelThree
       in: query
       required: false
       schema:
-        $ref: '#/components/schemas/JurisdictionAdminL3'
+        $ref: "#/components/schemas/JurisdictionAdminLevelThree"
+      example: "21001"
 
   requestBodies:
     EvidenceRequestBody:
@@ -616,75 +745,762 @@ components:
       content:
         application/json:
           schema:
-            title: 'EvidenceRequestBody'
+            title: "EvidenceRequestBody"
             type: object
-            required: [ evidenceTypeClassification, distributedAs, countryCode, requirementId, requesterAgent, person ]
-            properties:
-              evidenceTypeClassification:
-                $ref: '#/components/schemas/EvidenceTypeClassification'
-              distributedAs:
-                $ref: '#/components/schemas/DistributionFormat'
-              countryCode:
-                $ref: '#/components/schemas/Country'
-              procedureId:
-                $ref: '#/components/schemas/ProcedureId'
-              requirementId:
-                $ref: '#/components/schemas/RequirementId'
-              requesterAgent:
-                $ref: '#/components/schemas/RequesterAgent'
-              providerAgentId:
-                type: string
-              person:
-                $ref: '#/components/schemas/Person'
-
-  responses:
-    PreviewResponseBody:
-      description: 'Evidence preview details'
-      content:
-        application/json:
-          schema:
-            title: 'PreviewResponseBody'
-            type: object
-            required: [ conversationId, name, url ]
+            required:
+              [
+                conversationId,
+                evidenceTypeClassification,
+                distributedAs,
+                countryCode,
+                requirementId,
+                requesterAgent,
+                naturalPerson
+              ]
             properties:
               conversationId:
-                $ref: '#/components/schemas/ConversationId'
+                $ref: "#/components/schemas/ConversationId"
+              evidenceTypeClassification:
+                $ref: "#/components/schemas/EvidenceTypeClassification"
+              distributedAs:
+                $ref: "#/components/schemas/DistributionFormat"
+              countryCode:
+                $ref: "#/components/schemas/Country"
+              jurisdictionAdminLevelTwo:
+                $ref: "#/components/schemas/JurisdictionAdminLevelTwo"
+              jurisdictionAdminLevelThree:
+                $ref: "#/components/schemas/JurisdictionAdminLevelThree"
+              jurisdictionContextId:
+                type: string
+              procedureId:
+                $ref: "#/components/schemas/ProcedureId"
+              requirementId:
+                $ref: "#/components/schemas/RequirementId"
+              requesterAgent:
+                $ref: "#/components/schemas/RequesterAgent"
+              providerAgentId:
+                type: string
+              naturalPerson:
+                $ref: "#/components/schemas/NaturalPerson"
+          example:
+            countryCode: NL
+            procedureId: "00"
+            requirementId: >-
+              https://sr.oots.tech.ec.europa.eu/requirements/00000000-0000-0000-0000-000000000000
+            evidenceTypeClassification: >-
+              https://sr.oots.tech.ec.europa.eu/evidencetypeclassifications/NL/a6fa6bc6-022c-46dd-8885-fb88ed6259a6
+            distributedAs: application/pdf
+            providerAgentId: "12345"
+            requesterAgent:
+              organizationIdentifier: "2021006883"
+              name:
+                EN: Digg
+                SV: Digg
+              address:
+                fullAddress: Storgatan 37
+                locatorDesignator: "0"
+                postCode: "85233"
+                postCityName: Sundsvall
+                adminUnitLevelOne: SE
+                adminUnitLevelTwo: SE321
+                thoroughfare: ""
+            naturalPerson:
+              givenName: Nina
+              familyName: Greger
+              identifier: SE/SE/197309069289
+              dateOfBirth: "1973-09-06"
+              levelOfAssurance: Substantial
+              placeOfBirth: Stockholm
+              gender: FEMALE
+            conversationId: 5516b3c9-5f21-46ca-b774-bbdd82ead1c4
+    EvidenceSelectorLinkRequest:
+      required: true
+      content:
+        application/json:
+          schema:
+            title: "EvidenceSelectorLinkRequest"
+            type: object
+            required: [naturalPerson]
+            properties:
+              naturalPerson:
+                $ref: "#/components/schemas/NaturalPerson"
+          example:
+            naturalPerson:
+              givenName: Nina
+              familyName: Greger
+              identifier: SE/SE/197309069289
+              dateOfBirth: "1973-09-06"
+              levelOfAssurance: Substantial
+              placeOfBirth: Stockholm
+              gender: FEMALE
+              currentAddress:
+                fullAddress: Storgatan 37
+                locatorDesignator: "0"
+                postCode: "85233"
+                postCityName: Sundsvall
+                adminUnitLevelOne: SE
+                adminUnitLevelTwo: SE321
+                thoroughfare: ""
+  responses:
+    PreviewResponseBody:
+      description: "Evidence preview details"
+      content:
+        application/json:
+          schema:
+            title: "PreviewResponseBody"
+            type: object
+            required: [description, url]
+            properties:
               description:
-                $ref: '#/components/schemas/MultiLingualString'
+                $ref: "#/components/schemas/MultiLingualString"
               url:
-                description: 'Location of preview resource'
+                description: "Location of preview resource"
                 type: string
                 format: uri
+                minLength: 1
+          example:
+            description:
+              SV: Länk till den svenska förhandsgranskningen för SDG
+              EN: Link to Swedish SDG preview space
+            url: https://preview-space.accept.digg.se/39c01d11-4e8e-44b3-82b6-f5c2238568c3
     EvidencePlainResponse:
-      description: 'Requested evidence body only'
+      description: "Requested evidence body only"
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/EvidenceFilesBody'
-    EvidenceCreatedResponse:
-      description: 'Requested evidence body and location'
-      headers:
-        Location:
-          description: 'Location of returned evidence (same as in body)'
-          schema:
-            type: string
-            format: uri
+            $ref: "#/components/schemas/EvidenceFilesBody"
+          examples:
+            evidenceFilesBodyExample:
+              $ref: "#/components/examples/EvidenceFilesBodyExample"
+    ProcessingOrDeferredEvidenceResponse:
+      description: Successful response with either a ProcessingEvidenceResponseBody or a DeferredEvidenceResponseBody
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/EvidenceFilesBody'
-    EvidenceDeferredResponse:
-      description: 'Empty body and future location of requested evidence'
-      headers:
-        Location:
-          description: 'Future location of requested evidence available after this response was returned'
+            oneOf:
+              - $ref: "#/components/schemas/DeferredEvidenceResponseBody"
+              - $ref: "#/components/schemas/ProcessingEvidenceResponseBody"
+          example:
+            evidenceResponseType: ProcessingEvidenceResponse
+            estimatedAvailability: "2025-11-04T10:00:00Z"
+    ProcessingEvidenceResponse:
+      description: "The ProcessingEvidenceResponseBody object includes information about an estimate of when the evidence is available (Delayed response)"
+      content:
+        application/json:
           schema:
-            type: string
-            format: uri
-      content: { }
+            $ref: "#/components/schemas/ProcessingEvidenceResponseBody"
+          examples:
+            processingEvidenceResponseBodyExample:
+              $ref: "#/components/examples/ProcessingEvidenceResponseBodyExample"
+    InvalidAccessTokenResponse:
+      description: invalid AccessToken
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ErrorBody"
+          examples:
+            invalidAccessTokenExample:
+              $ref: "#/components/examples/InvalidAccessTokenExample"
+    TimeoutResponse:
+      description: "Timeout from evidence provider"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ErrorBody"
+          examples:
+            EvidenceProviderTimeoutExample:
+              $ref: "#/components/examples/EvidenceProviderTimeoutExample"
+    ConflictResponse:
+      description: "Conflict error response"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ErrorBody"
+          examples:
+            ConflictResponseExample:
+              $ref: "#/components/examples/ConflictingConversationIdExample"
+    EvidenceExchangeNotFoundResponse:
+      description: "Evidence exchange not found error response"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ErrorBody"
+          examples:
+            EvidenceExchangeNotFoundResponseExample:
+              $ref: "#/components/examples/EvidenceExchangeNotFoundResponseExample"
     ErrorResponse:
-      description: 'Generic error response'
+      description: "Generic error response"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ErrorBody"
+          example:
+            title: GENERAL ERROR
+            status: 500
+            detail: General Server Error
+            instance: /api/v2/evidence/preview-sessions
+            additionalInfo:
+              - Unknown error occurred
+              - Please contact support
+    BadRequestErrorResponse:
+      description: "Bad request"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ErrorBody"
+          examples:
+            DsdErrorResponseExample:
+              $ref: "#/components/examples/DsdErrorResponseExample"
+            NoConversationIdExample:
+              $ref: "#/components/examples/NoConversationIdExample"
+    InvalidConversationIdResponse:
+      description: "Invalid conversationId provided in request"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ErrorBody"
+          examples:
+            NoConversationIdExample:
+              $ref: "#/components/examples/NoConversationIdExample"
+    EvidenceSelectorLinkResponse:
+      description: "Evidence selector link response"
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ErrorBody'
+            title: "EvidenceSelectorResponseBody"
+            type: object
+            required: [description, url]
+            properties:
+              description:
+                $ref: "#/components/schemas/MultiLingualString"
+              url:
+                description: "Location of evidence selector"
+                type: string
+                format: uri
+                minLength: 1
+          example:
+            description:
+              SV: Länk till den svenska bevisväljaren för SDG
+              EN: Link to Swedish SDG evidence selector
+            url: https://evidence-selector.accept.digg.se/39c01d11-4e8e-44b3-82b6-f5c2238568c3
+    ApiInfoResponse:
+      description: "Metadata on this API"
+      content:
+        application/json:
+          schema:
+            title: "EvidenceSeApiInfoBody"
+            type: object
+            required: [apiName, apiVersion, apiReleased, apiDocumentation, apiStatus]
+            properties:
+              apiName:
+                description: "Name of this API"
+                type: string
+              apiVersion:
+                description: "Version of this API"
+                type: string
+              apiReleased:
+                description: "Date when this API was released using RFC 3339"
+                type: string
+                format: date
+              apiDocumentation:
+                description: "URL of where further API documentation is available"
+                type: string
+                format: uri
+              apiStatus:
+                type: string
+                description: API lifecycle status.
+          example:
+            apiName: Intermediation EU
+            apiVersion: 2.0.0
+            apiReleased: 2026-01-30
+            apiDocumentation: https://github.com/diggsweden/sdg-intermediation-eu
+            apiStatus: ACTIVE
+  examples:
+    DataServiceEvidenceTypeExample:
+      summary: Example of an  data service evidence type response
+      value:
+        identifier:
+          value: 8d0179d3-17fe-43ce-84f5-fd43f02c5617
+        distributedAs:
+          - format: application/pdf
+        accessService:
+          identifier:
+            schemeId: urn:cef.eu:names:identifier:EAS:0007
+            value: "2021006883"
+          name:
+            EN: SE Data Service
+          conformsTo:
+            - oots-edm:v1.0
+            - oots-edm:v1.2
+          publisher:
+            identifier:
+              schemeId: urn:oasis:names:tc:ebcore:partyid-type:unregistered:SE
+              value: DiggProviderDemo
+            name:
+              EN: DiggProviderDemo
+        address:
+          fullAddress: "851 02"
+          locatorDesignator: "0"
+          postCode: "85102"
+          postCityName: Sundsvall
+          adminUnitLevelOne: SE
+          adminUnitLevelTwo: SE321
+        jurisdiction:
+          adminUnitLevelOne: SE
+        authenticationLevelOfAssurance:
+          value: Substantial
+    evidenceTypesExample:
+      summary: Example of an evidence type response
+      value:
+        evidenceTypes:
+          - evidenceTypeClassification: >-
+              https://sr.oots.tech.ec.europa.eu/evidencetypeclassifications/SE/9e2c24f1-234e-439c-bd49-b6c8e3c4d87f
+            title:
+              EN: Test Evidence Type
+            description:
+              EN: Test evidence type for accelerator event
+            jurisdictions:
+              - adminUnitLevelOne: SE
+          - evidenceTypeClassification: >-
+              https://sr.oots.tech.ec.europa.eu/evidencetypeclassifications/SE/92e543f6-63ef-4b71-8dd7-261ea87f9b36
+            title:
+              EN: Delayed Evidence Type
+            jurisdictions:
+              - adminUnitLevelOne: SE
+          - evidenceTypeClassification: >-
+              https://sr.oots.tech.ec.europa.eu/evidencetypeclassifications/SE/7ecd7bb4-5a1c-4029-b604-ea8bc185cfab
+            title:
+              EN: Test timeout exception
+            jurisdictions:
+              - adminUnitLevelOne: SE
+          - evidenceTypeClassification: >-
+              https://sr.oots.tech.ec.europa.eu/evidencetypeclassifications/SE/80289714-ed02-4782-bf5a-04df1796d5c1
+            title:
+              EN: Test query exception
+            jurisdictions:
+              - adminUnitLevelOne: SE
+          - evidenceTypeClassification: >-
+              https://sr.oots.tech.ec.europa.eu/evidencetypeclassifications/SE/f5b9c9ed-bda7-4862-82af-13f39e52b2a0
+            title:
+              EN: Test no evidence
+            jurisdictions:
+              - adminUnitLevelOne: SE
+    RequirementsResponseExample:
+      summary: Example of a response returning requirements for procedure 00 (Test procedure) in Sweden
+      value:
+        requirements:
+          - id: >-
+              https://sr.oots.tech.ec.europa.eu/requirements/00000000-0000-0000-0000-000000000000
+            name:
+              FI: Testivaatimus
+              EN: (TEST) Test Requirement
+            countries:
+              - SE
+            referenceFramework:
+              - identifier: 278c4348-ab3b-4f40-8a2c-decbdf223859
+                title:
+                  EN: Test Procedure
+                description:
+                  EN: Test procedure for Accelerator event
+                relatedTo:
+                  - identifier: "00"
+    ProceduresResponseExample:
+      value:
+        procedure:
+          - name: Test Procedure
+            identifier: "00"
+            requirements:
+              - id: >-
+                  https://sr.oots.tech.ec.europa.eu/requirements/00000000-0000-0000-0000-000000000000
+                name:
+                  FI: Testivaatimus
+                  EN: (TEST) Test Requirement
+                countries:
+                  - SE
+                referenceFramework:
+                  - identifier: 278c4348-ab3b-4f40-8a2c-decbdf223859
+                    title:
+                      EN: Test Procedure
+                    description:
+                      EN: Test procedure for Accelerator event
+                    relatedTo:
+                      - identifier: "00"
+          - name: Notification of business activity
+            identifier: X1
+            requirements:
+              - id: >-
+                  https://sr.oots.tech.ec.europa.eu/requirements/fdbfd867-efa0-42e2-bb63-aa5ad0618343
+                name:
+                  EN: Proof of existence of a legal person (basic information)
+                countries:
+                  - SE
+                referenceFramework:
+                  - identifier: 40cb6154-33f1-4404-984d-2844431aded4
+                    title:
+                      EN: Notification of business activity
+                    relatedTo:
+                      - identifier: X1
+              - id: >-
+                  https://sr.oots.tech.ec.europa.eu/requirements/26d92682-7473-4794-b842-21179386d306
+                name:
+                  EN: Proof of the registration of the company in the business register
+                countries:
+                  - SE
+                referenceFramework:
+                  - identifier: 40cb6154-33f1-4404-984d-2844431aded4
+                    title:
+                      EN: Notification of business activity
+                    relatedTo:
+                      - identifier: X1
+          - name: "Registering a motor vehicle originating from or already registered in a Member State, in standard procedures\_(2)"
+            identifier: V2
+            requirements:
+              - id: >-
+                  https://sr.oots.tech.ec.europa.eu/requirements/37bf710f-8649-37ff-9449-77863d23e512
+                name:
+                  EN: >-
+                    Proof of vehicle registration Part I (with only the mandatory II.5
+                    C4 owner related information included)
+                countries:
+                  - SE
+                referenceFramework:
+                  - identifier: aa341483-7581-4da9-adfa-3fc6c2081ce2
+                    title:
+                      EN: "Registering a motor vehicle originating from or already registered in a Member State, in standard procedures\_(2)"
+                    relatedTo:
+                      - identifier: V2
+              - id: >-
+                  https://sr.oots.tech.ec.europa.eu/requirements/8863718d-d7b9-3e10-8e66-ee1748b86fbb
+                name:
+                  EN: Proof of vehicle registration Part II
+                countries:
+                  - SE
+                referenceFramework:
+                  - identifier: aa341483-7581-4da9-adfa-3fc6c2081ce2
+                    title:
+                      EN: "Registering a motor vehicle originating from or already registered in a Member State, in standard procedures\_(2)"
+                    relatedTo:
+                      - identifier: V2
+          - name: >-
+              Applying for a tertiary education study financing, such as study grants
+              and loans from a public body or institution
+            identifier: T1
+            requirements:
+              - id: >-
+                  https://sr.oots.tech.ec.europa.eu/requirements/8265602b-f19f-3865-8b2b-6468d05e8415
+                name:
+                  EN: >-
+                    Proof of tertiary education courses & grades (transcript)
+                    [completed/in progress]
+                countries:
+                  - SE
+                referenceFramework:
+                  - identifier: f5665f79-1866-42fb-9c35-b22bc55b26f5
+                    title:
+                      EN: >-
+                        Submitting an initial application for admission to public
+                        tertiary education institution
+                    relatedTo:
+                      - identifier: T2
+                  - identifier: 4f0a5e27-225e-4b7f-b340-8ab312127553
+                    title:
+                      EN: >-
+                        Applying for a tertiary education study financing, such as study
+                        grants and loans from a public body or institution
+                    relatedTo:
+                      - identifier: T1
+                  - identifier: 231d49b3-800a-4829-aa5b-20dc7b80422b
+                    title:
+                      EN: >-
+                        Requesting academic recognition of diplomas, certificates or
+                        other proof of studies or courses
+                    relatedTo:
+                      - identifier: T3
+          - name: >-
+              Submitting an initial application for admission to public tertiary
+              education institution
+            identifier: T2
+            requirements:
+              - id: >-
+                  https://sr.oots.tech.ec.europa.eu/requirements/84ec4dee-1a2a-3430-b7ec-cf7884150777
+                name:
+                  EN: Proof of tertiary education diploma supplement (EU DS template)
+                countries:
+                  - SE
+                referenceFramework:
+                  - identifier: f5665f79-1866-42fb-9c35-b22bc55b26f5
+                    title:
+                      EN: >-
+                        Submitting an initial application for admission to public
+                        tertiary education institution
+                    relatedTo:
+                      - identifier: T2
+              - id: >-
+                  https://sr.oots.tech.ec.europa.eu/requirements/8265602b-f19f-3865-8b2b-6468d05e8415
+                name:
+                  EN: >-
+                    Proof of tertiary education courses & grades (transcript)
+                    [completed/in progress]
+                countries:
+                  - SE
+                referenceFramework:
+                  - identifier: f5665f79-1866-42fb-9c35-b22bc55b26f5
+                    title:
+                      EN: >-
+                        Submitting an initial application for admission to public
+                        tertiary education institution
+                    relatedTo:
+                      - identifier: T2
+                  - identifier: 4f0a5e27-225e-4b7f-b340-8ab312127553
+                    title:
+                      EN: >-
+                        Applying for a tertiary education study financing, such as study
+                        grants and loans from a public body or institution
+                    relatedTo:
+                      - identifier: T1
+                  - identifier: 231d49b3-800a-4829-aa5b-20dc7b80422b
+                    title:
+                      EN: >-
+                        Requesting academic recognition of diplomas, certificates or
+                        other proof of studies or courses
+                    relatedTo:
+                      - identifier: T3
+              - id: >-
+                  https://sr.oots.tech.ec.europa.eu/requirements/edba1922-cb7f-3543-a5d4-945cb63c9270
+                name:
+                  EN: Proof of secondary education diploma/certificate
+                countries:
+                  - SE
+                referenceFramework:
+                  - identifier: f5665f79-1866-42fb-9c35-b22bc55b26f5
+                    title:
+                      EN: >-
+                        Submitting an initial application for admission to public
+                        tertiary education institution
+                    relatedTo:
+                      - identifier: T2
+          - name: >-
+              Requesting academic recognition of diplomas, certificates or other proof
+              of studies or courses
+            identifier: T3
+            requirements:
+              - id: >-
+                  https://sr.oots.tech.ec.europa.eu/requirements/8265602b-f19f-3865-8b2b-6468d05e8415
+                name:
+                  EN: >-
+                    Proof of tertiary education courses & grades (transcript)
+                    [completed/in progress]
+                countries:
+                  - SE
+                referenceFramework:
+                  - identifier: f5665f79-1866-42fb-9c35-b22bc55b26f5
+                    title:
+                      EN: >-
+                        Submitting an initial application for admission to public
+                        tertiary education institution
+                    relatedTo:
+                      - identifier: T2
+                  - identifier: 4f0a5e27-225e-4b7f-b340-8ab312127553
+                    title:
+                      EN: >-
+                        Applying for a tertiary education study financing, such as study
+                        grants and loans from a public body or institution
+                    relatedTo:
+                      - identifier: T1
+                  - identifier: 231d49b3-800a-4829-aa5b-20dc7b80422b
+                    title:
+                      EN: >-
+                        Requesting academic recognition of diplomas, certificates or
+                        other proof of studies or courses
+                    relatedTo:
+                      - identifier: T3
+              - id: >-
+                  https://sr.oots.tech.ec.europa.eu/requirements/dbe25e4e-fc46-3abd-823c-1bcfd54cb78d
+                name:
+                  EN: >-
+                    Proof of qualification level of tertiary education
+                    diploma/certificate/degree and its courses
+                countries:
+                  - SE
+                referenceFramework:
+                  - identifier: 231d49b3-800a-4829-aa5b-20dc7b80422b
+                    title:
+                      EN: >-
+                        Requesting academic recognition of diplomas, certificates or
+                        other proof of studies or courses
+                    relatedTo:
+                      - identifier: T3
+          - name: Requesting proof of registration of birth in SE
+            identifier: R1
+            requirements:
+              - id: >-
+                  https://sr.oots.tech.ec.europa.eu/requirements/522d091c-90b3-32e0-8cc7-796d8d9c3f5e
+                name:
+                  EN: Proof of birth
+                countries:
+                  - SE
+                referenceFramework:
+                  - identifier: fb728643-cca0-444f-b72e-430bb6842535
+                    title:
+                      SV: Födselbevis
+                      EN: Proof of Birth
+                    relatedTo:
+                      - identifier: R1
+              - id: >-
+                  https://sr.oots.tech.ec.europa.eu/requirements/005a80c1-f2d5-3cdb-bc65-2a085600fbde
+                name:
+                  EN: Proof of birth of child
+                countries:
+                  - SE
+                referenceFramework:
+                  - identifier: fb728643-cca0-444f-b72e-430bb6842535
+                    title:
+                      SV: Födselbevis
+                      EN: Proof of Birth
+                    relatedTo:
+                      - identifier: R1
+                  - identifier: 716900d9-2590-40ff-b928-6de8d890360c
+                    title:
+                      SV: Begäran om registrering av födsel
+                      EN: Requesting proof of registration of birth in SE
+                    relatedTo:
+                      - identifier: R1
+              - id: >-
+                  https://sr.oots.tech.ec.europa.eu/requirements/005a80c1-f2d5-3cdb-bc65-2a085600fbde
+                name:
+                  EN: Proof of birth of child
+                countries:
+                  - SE
+                referenceFramework:
+                  - identifier: fb728643-cca0-444f-b72e-430bb6842535
+                    title:
+                      SV: Födselbevis
+                      EN: Proof of Birth
+                    relatedTo:
+                      - identifier: R1
+                  - identifier: 716900d9-2590-40ff-b928-6de8d890360c
+                    title:
+                      SV: Begäran om registrering av födsel
+                      EN: Requesting proof of registration of birth in SE
+                    relatedTo:
+                      - identifier: R1
+    EvidenceFilesBodyExample:
+      summary: Example of an Evidence File body
+      value:
+        evidenceFiles:
+          - mimetype: application/pdf
+            content: BASE64BINARYDATA
+            filename: cid:bc615698-9a45-42d2-9256-32b781c8ca7a@oots.se.accept.digg.se.pdf
+            identifier: 91218c72-3f91-430f-9cd0-40113891f424
+            issuingAuthority:
+              id: DiggProviderDemo
+              name:
+                EN: DiggProviderDemo
+            isConformantTo:
+              evidenceTypeClassification: >-
+                https://sr.oots.tech.ec.europa.eu/evidencetypeclassifications/SE/9e2c24f1-234e-439c-bd49-b6c8e3c4d87f
+              title:
+                EN: Test Evidence Type
+            issuingDate: "2025-03-15T14:30:00+02:00"
+            distribution:
+              format: application/pdf
+              language:
+                - SV
+                - EN
+    ProcessingEvidenceResponseBodyExample:
+      summary: Example of a ProcessingEvidenceResponseBody
+      value:
+        estimatedAvailability: "2025-11-04T10:00:00Z"
+        evidenceResponseType: ProcessingEvidenceResponse
+    EbConstrainstViolationErrorResponseExample:
+      summary: Example of an EB constraint violation error response
+      value:
+        title: EB CONSTRAINTS VIOLATED
+        status: 400
+        detail: All mandatory parameters must be present and have valid values
+        instance: /api/v2/common-services/eb/requirements
+        method: GET
+    DsdErrorResponseExample:
+      summary: Example of a DSD constraint violation error response
+      value:
+        title: DSD ERROR
+        status: 400
+        detail: All mandatory parameters must be present and have valid values
+        instance: /api/v2/evidence/preview-sessions
+        method: POST
+    EbRequirementsNotFoundResponseExample:
+      summary: Example of a requirements not found error response
+      value:
+        title: EB REQUIREMENTS NOT FOUND
+        status: 404
+        detail: No requirements found for the provided parameters
+        instance: /api/v2/common-services/eb/requirements
+        method: GET
+    NoConversationIdExample:
+      summary: Example of an invalid conversationId error response
+      value:
+        title: INVALID CONVERSATION ID
+        status: 400
+        detail: Provided path param is an invalid conversationId
+        instance: /api/v2/evidence/preview-sessions/5b96c9f5-8b8f-4142-a6f6-3abf7ce8f1ba/files
+        additionalInfo:
+          - The conversationId does not match any known session
+    EbProceduresNotFoundResponseExample:
+      summary: Example of a procedures not found error response
+      value:
+        title: EB PROCEDURES NOT FOUND
+        status: 404
+        detail: No procedures found for the provided parameters
+        instance: /api/v2/common-services/eb/procedures
+        method: GET
+    EbEvidenceTypeNotFoundResponseExample:
+      summary: Example of an EB evidence type not found error response
+      value:
+        title: EB EVIDENCE TYPE NOT FOUND
+        status: 404
+        detail: No evidence types found for the provided parameters
+        instance: /api/v2/common-services/eb/evidence-types
+        method: GET
+    EvidenceExchangeNotFoundResponseExample:
+      summary: Example of an evidence exchange not found error response
+      value:
+        title: EVIDENCE EXCHANGE NOT FOUND
+        status: 404
+        detail: No ongoing evidence exchange found for the provided conversationId
+        method: GET
+        instance: /api/v2/evidence/preview-sessions/5b96c9f5-8b8f-4142-a6f6-3abf7ce8f1ba/files
+        additionalInfo:
+          - No ongoing evidence exchange found for conversationId 5b96c9f5-8b8f-4142-a6f6-3abf7ce8f1ba
+    DsdNotFoundErrorResponseExample:
+      summary: Example of a Data Service not found error response
+      value:
+        title: DATA SERVICE NOT FOUND
+        status: 404
+        detail: The requested Data Service could not be found
+        method: GET
+        instance: /api/v2/common-services/dsd/data-services
+    InvalidAccessTokenExample:
+      summary: Example of an invalid access token error response
+      value:
+        title: INVALID ACCESS TOKEN
+        status: 401
+        detail: The provided access token is invalid or expired
+        instance: /api/v2/evidence/preview-sessions
+        method: POST
+        additionalInfo:
+          - Access token has expired
+          - Access token is malformed
+    ConflictingConversationIdExample:
+      value:
+        title: CONFLICTING CONVERSATIONID
+        status: 409
+        detail: An evidence exchange with the provided conversationId already exists
+        instance: /api/v2/evidence/preview-sessions
+        method: POST
+    EvidenceProviderTimeoutExample:
+      value:
+        title: TIMEOUT
+        status: 504
+        detail: A timeout occurred
+        instance: /api/v2/evidence/preview-sessions
+        additionalInfo: ["providerAgentId:", "123456-78"]
