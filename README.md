@@ -111,7 +111,7 @@ Opt Token expired
 OF->>AT: Access Token Request(refresh token)
 AT-->OF: Access Token Grant (accesstoken)
 end
-OF->>+BT: POST /preview-sessions (accesstoken)
+OF->>+BT: POST /evidence/preview-sessions (accesstoken)
 BT->>BT: Validate Access Token
 BT->>OTSE: Bevisbegäran
 OTSE->>OTMS: Bevisbegäran
@@ -135,7 +135,7 @@ MSOF->>OTMS: Svar på bevisbegäran
 OTMS->>OTSE: Svar på bevisbegäran
 OTSE->>BT: Svar på bevisbegäran
 loop Polla efter svar
-OF->>+BT: Hämta bevis /files
+OF->>+BT: Hämta bevis /evidence/preview-sessions/{conversationId}/files
 BT-->>-OF: Bevissvar
 end
 ```
